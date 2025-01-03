@@ -3,12 +3,12 @@ from starlette.responses import StreamingResponse, Response, JSONResponse
 from starlette.requests import Request
 from starlette.routing import Route
 import httpx
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import get_bearer_token_provider, InteractiveBrowserCredential
 import yaml
 import random
 import asyncio
 
-credential = DefaultAzureCredential()
+credential = InteractiveBrowserCredential()
 token_provider = get_bearer_token_provider(credential, "https://cognitiveservices.azure.com/.default")
 basic_config = {
     "endpoints": [
