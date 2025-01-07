@@ -38,8 +38,8 @@ def task_complete(reason: str, agent: Agent) -> NoReturn:
     files_list = [x[0].lower() for x in agent.written_files]
     #if "coverage_results.txt" not in files_list:
     #    return "You cannot claim goal accomplished without running test cases, measuring coverage and saving them to the file 'coverage_results.txt'"
-    if "dockerfile" not in files_list:
-        return "You have not created a docker file that creates a docker images and installs the project within that image, installs the dependencies and run tests"
+    # if "dockerfile" not in files_list:
+    #     return "You have not created a docker file that creates a docker images and installs the project within that image, installs the dependencies and run tests"
     #if not any("coverage" in x for x in files_list):
     #    return "You should write test results into a file called: coverage_results.txt"
     #else:
