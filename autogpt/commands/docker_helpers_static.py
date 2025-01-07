@@ -92,7 +92,6 @@ def create_screen_session(container):
     command = "screen -ls"
     output = execute_command_in_container_screen(container, command)
     
-    
     session_id = parse_screen_sesssion_id(output)
      
     ACTIVE_SCREEN["id"] = session_id
@@ -243,7 +242,37 @@ def start_container(image_tag):
         create_screen_session(container)
         return container
     except Exception as e:
-        print(f"ERRRRRRRRRRRR: An error occurred while running the container: {e}")
+        print(f"ERROR: An error occurred while running the container: {e}")
+        return None
+    
+def start_ces_container(repo, workflow_content):
+    from autogpt.commands.ces_client import CESClient
+    from azure.identity import (
+        get_bearer_token_provider,
+        ManagedIdentityCredential,
+        DefaultAzureCredential,
+        InteractiveBrowserCredential
+    )
+    bearer_token_provider = get_bearer_token_provider(
+        (
+            ManagedIdentityCredential(
+                client_id=os.environ["DEFAULT_IDENTITY_CLIENT_ID"]
+            )
+            if "DEFAULT_IDENTITY_CLIENT_ID" in os.environ
+            else InteractiveBrowserCredential()
+        ),
+        "api://17b0ad65-ed36-4194-bb27-059c567bc41f/.default",
+    )
+    container = CESClient(repo, workflow_content=workflow_content, base_url="https://ces-dev1.azurewebsites.net", bearer_token_provider=bearer_token_provider)
+    try:
+        print(f"Running CES container from repo {repo}, workflow content {workflow_content}...")
+        container.__enter__()
+        print(f"Container {container.short_id} is running.")
+        print("CREATING SCREEN SESSION")
+        create_screen_session(container)
+        return container
+    except Exception as e:
+        print(f"ERROR: An error occurred while running the container: {e}")
         return None
 
 def execute_command_in_container_old(container, command):
@@ -266,7 +295,8 @@ def execute_command_in_container(container, command):
 
         # Execute the command without a TTY, but with streaming output
         exec_result = container.exec_run(shell_command, tty=False)
-
+        
+        return exec_result.output.decode('utf-8'), exec_result.exit_code
         # Decode and process the output
         output = exec_result.output.decode('utf-8')
         #print(f"Command output:\n{output}")
@@ -368,15 +398,20 @@ def create_file_tar(file_path, file_content):
     return data
 
 def write_string_to_file(container, file_content, file_path):
+    from autogpt.commands.ces_client import CESClient
     try:
-        # Create a tarball with the file
-        tar_data = create_file_tar(file_path, file_content)
+        if type(container) == CESClient:
+            container.create_file(file_path, file_content)
+        else:
+            # Create a tarball with the file
+            tar_data = create_file_tar(file_path, file_content)
 
-        # Copy the tarball into the container
-        container.put_archive('/', tar_data)
+            # Copy the tarball into the container
+            container.put_archive('/', tar_data)
 
         # Verify the file was written
-        exit_code, output = container.exec_run(f"cat {file_path}")
+        result = container.exec_run(f"cat {file_path}")
+        exit_code, output = result.exit_code, result.output
         if exit_code == 0:
             print(f"File content in container: {output.decode('utf-8')}", file_path)
         else:
@@ -400,8 +435,8 @@ def read_file_from_container(container, file_path):
     command = f'cat {file_path}'
 
     # Execute the command within the container
-    exit_code, output = container.exec_run(cmd=command, tty=True)
-    
+    result = container.exec_run(cmd=command, tty=True)
+    exit_code, output = result.exit_code, result.output
     if exit_code == 0:
         if file_path.lower().endswith("xml"):
             return convert_xml_to_yaml(output.decode('utf-8'))

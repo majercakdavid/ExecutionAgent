@@ -1,11 +1,13 @@
 {
     "repetition_handling": "RESTRICT",
-    "project_path": "marshmallow",
-    "project_url": "https://github.com/marshmallow-code/marshmallow",
+    "project_path": "pipetools",
+    "project_url": "https://github.com/0101/pipetools",
     "budget_control": {
         "name": "NO-TRACK"
     },
     "language": "Python",
-    "image": "marshmallow_image:ExecutionAgent",
+    "image": "pipetools_image:ExecutionAgent",
+    "repo_name": "0101/pipetools",
+    "workflow_content": "jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - name: Checkout\n      uses: actions/checkout@v3\n    - run: apt-get install python3-dev -y\n    - run: pip install numpy==1.22.2 && pip install -e .\n    - name: Run Tests\n      run: ls\n",
     "keep_container": "FALSE"
 }

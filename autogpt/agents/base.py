@@ -26,7 +26,7 @@ from autogpt.memory.message_history import MessageHistory
 from autogpt.prompts.prompt import DEFAULT_TRIGGERING_PROMPT
 from autogpt.json_utils.utilities import extract_dict_from_response
 from autogpt.commands.info_collection_static import collect_requirements, infer_requirements, extract_instructions_from_readme
-from autogpt.commands.docker_helpers_static import start_container, remove_ansi_escape_sequences, ask_chatgpt
+from autogpt.commands.docker_helpers_static import start_container, remove_ansi_escape_sequences, ask_chatgpt, start_ces_container
 from autogpt.commands.search_documentation import search_install_doc
 
 CommandName = str
@@ -179,7 +179,12 @@ class BaseAgent(metaclass=ABCMeta):
 
         if self.hyperparams["image"] != "NIL" and 1 == 0:
             self.container = start_container(self.hyperparams["image"])
-            if self.container == None:
+            if self.container is None:
+                logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
+                self.hyperparams["image"] = "NIL"
+        elif self.hyperparams.get("repo_name", "NIL") != "NIL" and self.hyperparams.get("workflow_content", "NIL") != "NIL":
+            self.container = start_ces_container(self.hyperparams["repo_name"], self.hyperparams["workflow_content"])
+            if self.container is None:
                 logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"
 

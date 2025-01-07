@@ -299,7 +299,8 @@ def execute_shell(command: str, agent: Agent) -> str:
                     agent.command_stuck = False
                     return "The text that appears on the terminal after executing your command is:\n" + str(ret_val[0])
                     
-        new_command = "screen -S my_screen_session -X stuff '{} > /tmp/cmd_result 2>&1\n'".format(command)
+        # new_command = "screen -S my_screen_session -X stuff '{} > /tmp/cmd_result 2>&1\n'".format(command)
+        new_command = "{} > /tmp/cmd_result 2>&1".format(command)
         ret_val = execute_command_in_container(agent.container, new_command)
         #print("----- OUTPUT ON DOCKER LEVEL: {}".format(ret_val))
         try:

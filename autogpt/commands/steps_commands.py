@@ -149,21 +149,21 @@ def extract_dependencies(agent: Agent) -> str:
 def list_files(agent: Agent) -> str:
     return os.listdir(os.path.join(workspace_folder, agent.project_path))
 
-@command(
-    "read_file",
-    "",
-    {
-        "file_path": {
-            "type": "string",
-            "description": "",
-            "required": True,
-        }
-    },
-)
-def read_file(file_path: str, agent: Agent) -> str:
-    project_path = agent.project_path
-    with open(os.path.join(workspace_folder, project_path, file_path)) as fpp:
-        return "The result of reading the file {}:\n{}".format(file_path, fpp.read())
+# @command(
+#     "read_file",
+#     "",
+#     {
+#         "file_path": {
+#             "type": "string",
+#             "description": "",
+#             "required": True,
+#         }
+#     },
+# )
+# def read_file(file_path: str, agent: Agent) -> str:
+#     project_path = agent.project_path
+#     with open(os.path.join(workspace_folder, project_path, file_path)) as fpp:
+#         return "The result of reading the file {}:\n{}".format(file_path, fpp.read())
 
 """@command(
     "write_dependencies_to_file",

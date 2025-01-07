@@ -12,6 +12,7 @@ attrs==23.2.0
 auto_gpt_plugin_template @ git+https://github.com/Significant-Gravitas/Auto-GPT-Plugin-Template@7612a14c629dc64ad870eee4d05850d60e1dd9ce
 autoflake==2.3.1
 azure-identity==1.19.0
+junitparser
 Babel==2.15.0
 beautifulsoup4==4.12.3
 black==24.4.2

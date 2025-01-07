@@ -131,7 +131,6 @@ class AIConfig:
 
         # Construct full prompt
         full_prompt_parts = {
-            
             "role": f"You are {self.ai_name}, {self.ai_role.rstrip('.')}." +\
             "Your decisions must always be made independently without seeking " +\
             "user assistance. Play to your strengths as an LLM and pursue " +\
@@ -155,7 +154,7 @@ class AIConfig:
                         "For your task, you must fulfill the following goals:",
                         *[f"{i+1}. {goal}" for i, goal in enumerate(self.ai_goals)],
                     ]
-            
+    
         additional_constraints: list[str] = []
         if self.api_budget > 0.0:
             additional_constraints["additional constraints"] = (
