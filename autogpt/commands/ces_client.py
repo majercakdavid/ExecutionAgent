@@ -260,6 +260,7 @@ class CESClient:
         if self.heartbeat_alive or self.heartbeat_thread is not None:
             self.heartbeat_alive = False
             self.heartbeat_thread.join()
+            self.heartbeat_thread = None
 
         failures = 0
         while failures < 3:
