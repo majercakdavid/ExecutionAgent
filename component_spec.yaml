@@ -43,7 +43,7 @@ command:
 
   pip install openai==1.58.1
 
-  echo "sk-whatever" > openai_token.txt
+  echo -n "sk-whatever" > openai_token.txt
 
   az login --identity --username $$DEFAULT_IDENTITY_CLIENT_ID
 
