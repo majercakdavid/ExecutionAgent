@@ -245,12 +245,11 @@ def start_container(image_tag):
         print(f"ERROR: An error occurred while running the container: {e}")
         return None
     
-def start_ces_container(repo, workflow_content):
+def start_ces_container(repo, repo_version, workflow_content):
     from autogpt.commands.ces_client import CESClient
     from azure.identity import (
         get_bearer_token_provider,
         ManagedIdentityCredential,
-        DefaultAzureCredential,
         InteractiveBrowserCredential
     )
     bearer_token_provider = get_bearer_token_provider(
@@ -263,7 +262,7 @@ def start_ces_container(repo, workflow_content):
         ),
         "api://17b0ad65-ed36-4194-bb27-059c567bc41f/.default",
     )
-    container = CESClient(repo, workflow_content=workflow_content, base_url="https://ces-dev1.azurewebsites.net", bearer_token_provider=bearer_token_provider)
+    container = CESClient(repo, version=repo_version, workflow_content=workflow_content, base_url="https://ces-dev1.azurewebsites.net", bearer_token_provider=bearer_token_provider)
     try:
         print(f"Running CES container from repo {repo}, workflow content {workflow_content}...")
         container.__enter__()

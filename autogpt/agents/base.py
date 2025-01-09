@@ -113,7 +113,7 @@ class BaseAgent(metaclass=ABCMeta):
             self.prompt_dictionary["general_guidelines"]= self.python_guidelines
         elif self.hyperparams["language"].lower() == "java":
             self.prompt_dictionary["general_guidelines"]= self.java_guidelines
-        elif self.hyperparams["language"].lower() == "javascript":
+        elif self.hyperparams["language"].lower() == "javascript" or self.hyperparams["language"].lower() == "typescript":
             self.prompt_dictionary["general_guidelines"]= self.javascript_guidelines
         elif self.hyperparams["language"].lower() in ["c", "c++"]:
             self.prompt_dictionary["general_guidelines"]= self.c_guidelines
@@ -183,7 +183,7 @@ class BaseAgent(metaclass=ABCMeta):
                 logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"
         elif self.hyperparams.get("repo_name", "NIL") != "NIL" and self.hyperparams.get("workflow_content", "NIL") != "NIL":
-            self.container = start_ces_container(self.hyperparams["repo_name"], self.hyperparams["workflow_content"])
+            self.container = start_ces_container(self.hyperparams["repo_name"], self.hyperparams.get("repo_version", None), self.hyperparams["workflow_content"])
             if self.container is None:
                 logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"

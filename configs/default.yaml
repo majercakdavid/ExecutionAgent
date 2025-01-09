@@ -1,0 +1,43 @@
+aml_config:
+  # Workspace configuration for training
+  # workspace_name: "genai-posttraining-UKS"
+  # resource_group: "genai-postraining-RG"
+  # subscription_id: "584bfbd1-d24e-4f7b-81cf-c953a75c45e5"
+  # cpu_target: d13v2
+  # experiment_name: ces-pipeline
+
+  # Workspace configuration for data preparation
+  # workspace_name: "genaicpu"
+  # resource_group: "singularity-genaicpuvc"
+  # subscription_id: "9bd2a334-cbd8-4e2c-9ef8-74ce1f442924"
+  # cpu_target: e2v3
+
+  workspace_name: "synthetic-datagen-ws-wus3"
+  resource_group: "synthetic-dategen-RG"
+  subscription_id: "584bfbd1-d24e-4f7b-81cf-c953a75c45e5"
+  cpu_target: e16sv3
+
+  # workspace_name: "Alexander256V100"
+  # resource_group: "Alexander256"
+  # subscription_id: "79f57c16-00fe-48da-87d4-5192e86cd047"
+  # cpu_target: e4sv3
+
+  experiment_name: autogen-pipeline
+
+  job_name_prefix: autogen-pipeline
+
+sing_train_config:
+  image_version: "acpt-2.3.1-py3.10-cuda12.1"
+  sla_tier: "Premium"
+  priority: "Low"
+  virtual_cluster: "/subscriptions/d676d072-7cbf-4197-b2d6-17ecf38370d0/resourceGroups/singularity-genai-gpu-uksouth/providers/Microsoft.MachineLearningServices/virtualClusters/genai-shared-uksouth"
+  instance_type: "Singularity.ND96amrs_A100_v4"
+  instance_count: 8
+
+sing_eval_config:
+  image_version: "acpt-2.3.1-py3.10-cuda12.1"
+  sla_tier: "Premium"
+  priority: "Low"
+  virtual_cluster: "/subscriptions/d676d072-7cbf-4197-b2d6-17ecf38370d0/resourceGroups/singularity-genai-gpu-uksouth/providers/Microsoft.MachineLearningServices/virtualClusters/genai-shared-uksouth"
+  instance_type: "Singularity.ND96amrs_A100_v4"
+  instance_count: 1

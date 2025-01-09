@@ -138,7 +138,7 @@ def create_chat_completion(
         "model": model,
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "response_format": { "type": "json_object" }
+        # "response_format": { "type": "json_object" }
     }
 
     for plugin in config.plugins:
