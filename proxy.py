@@ -3,12 +3,19 @@ from starlette.responses import StreamingResponse, Response, JSONResponse
 from starlette.requests import Request
 from starlette.routing import Route
 import httpx
-from azure.identity import get_bearer_token_provider, InteractiveBrowserCredential
+import os
+from azure.identity import get_bearer_token_provider, InteractiveBrowserCredential, ManagedIdentityCredential
 import yaml
 import random
 import asyncio
 
-credential = InteractiveBrowserCredential()
+credential = (
+    ManagedIdentityCredential(
+        client_id=os.environ["DEFAULT_IDENTITY_CLIENT_ID"]
+    )
+    if "DEFAULT_IDENTITY_CLIENT_ID" in os.environ
+    else InteractiveBrowserCredential()
+)
 token_provider = get_bearer_token_provider(credential, "https://cognitiveservices.azure.com/.default")
 basic_config = {
     "endpoints": [
@@ -64,6 +71,7 @@ async def test_endpoint(client, endpoint, token):
 
 async def filter_endpoints(config):
     token = token_provider()
+    print(f"Testing endpoints: {config['endpoints']}, token: {token}")
     async with httpx.AsyncClient() as client:
         tasks = [
             test_endpoint(client, endpoint, token) for endpoint in config["endpoints"]
@@ -75,6 +83,7 @@ async def filter_endpoints(config):
 
 async def lifespan(app):
     try:
+        print("Loading config from config.yaml")
         with open("config.yaml", "r") as f:
             config = yaml.safe_load(f)
     except Exception as e:

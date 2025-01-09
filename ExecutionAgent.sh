@@ -35,24 +35,24 @@ run_with_retries() {
     ((attempt++))
   done
 
-  while true; do
-    echo "======================================================================"
-    echo "PROMPTING USER FOR ADDITIONAL RETRY:"
-    echo "PROJECT: $project_name"
-    echo "======================================================================"
+  # while true; do
+  #   echo "======================================================================"
+  #   echo "PROMPTING USER FOR ADDITIONAL RETRY:"
+  #   echo "PROJECT: $project_name"
+  #   echo "======================================================================"
 
-    read -p "Post-process failed after $max_retries attempts. Do you want to retry again? (yes/no): " user_input
-    case "$user_input" in
-      [Yy]* ) eval "$command"; result=$(python3.10 post_process.py "$project_name");
-              if [[ "$result" == "SUCCESS" ]]; then
-                echo "Post-process succeeded."
-                return
-              fi
-              ;;
-      [Nn]* ) echo "Exiting retry loop."; break;;
-      * ) echo "Please answer yes or no.";;
-    esac
-  done
+  #   read -p "Post-process failed after $max_retries attempts. Do you want to retry again? (yes/no): " user_input
+  #   case "$user_input" in
+  #     [Yy]* ) eval "$command"; result=$(python3.10 post_process.py "$project_name");
+  #             if [[ "$result" == "SUCCESS" ]]; then
+  #               echo "Post-process succeeded."
+  #               return
+  #             fi
+  #             ;;
+  #     [Nn]* ) echo "Exiting retry loop."; break;;
+  #     * ) echo "Please answer yes or no.";;
+  #   esac
+  # done
 }
 
 # Parse command-line arguments

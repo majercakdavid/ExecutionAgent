@@ -1,0 +1,60 @@
+name: execution_agent_component
+version: 0.0.1
+display_name: ExecutionAgent Component for executing workflows
+type: command
+tags: { author: damajercak@microsoft.com }
+is_deterministic: true
+
+inputs:
+  blocking_input:
+    type: uri_folder
+    mode: mount
+    optional: true
+  data_dir:
+    type: uri_folder
+    mode: mount
+    optional: true
+  data_path:
+    type: string
+    optional: true
+  data_ratio:
+    type: string
+    optional: true
+  remote_server_url:
+    type: string
+    optional: true
+  remote_server_auth_url:
+    type: string
+    optional: true
+  valid_repos:
+    type: string
+    optional: true
+
+outputs:
+  output_dir: 
+    type: uri_folder
+    mode: mount
+
+code: .
+
+command:
+
+  pip install -r ./requirements.txt
+
+  pip install openai==1.58.1
+
+  echo "sk-whatever" > openai_token.txt
+
+  az login --identity --username $$DEFAULT_IDENTITY_CLIENT_ID
+
+  python run.py --output_dir ${{outputs.output_dir}} $[[--data_dir ${{inputs.data_dir}}]] $[[--remote_server_url ${{inputs.remote_server_url}}]] $[[--remote_server_auth_url ${{inputs.remote_server_auth_url}}]] $[[--data_path ${{inputs.data_path}}]] $[[--data_ratio ${{inputs.data_ratio}}]] $[[--valid_repos ${{inputs.valid_repos}}]]
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04
+
+distribution:
+  type: mpi
+
+resources:
+  instance_count: 1
+  # shm_size: 256g

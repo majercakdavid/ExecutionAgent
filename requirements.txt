@@ -12,6 +12,7 @@ attrs==23.2.0
 auto_gpt_plugin_template @ git+https://github.com/Significant-Gravitas/Auto-GPT-Plugin-Template@7612a14c629dc64ad870eee4d05850d60e1dd9ce
 autoflake==2.3.1
 azure-identity==1.19.0
+azure-cli
 junitparser
 Babel==2.15.0
 beautifulsoup4==4.12.3
@@ -221,3 +222,4 @@ whatthepatch==1.0.5
 wrapt==1.16.0
 wsproto==1.2.0
 yarl==1.9.4
+mpi4py
