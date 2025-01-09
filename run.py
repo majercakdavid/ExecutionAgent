@@ -289,7 +289,8 @@ def main():
             os.remove(
                 os.path.join(args.output_dir, instance_id, f"workflow_tests.jsonl")
             )
-
+            
+        WORKFLOW_INFO_FILE = "workflow_info.json"
         if not os.path.exists(
             os.path.join(args.data_path, instance_id, WORKFLOW_INFO_FILE)
         ):
