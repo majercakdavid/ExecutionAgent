@@ -24,6 +24,7 @@ basic_config = {
         {'api_version': '2024-05-01-preview', 'deployment': 'gpt4-t-1106', 'url': 'https://aims-datagen-spot-safrican.openai.azure.com/'}, 
         {'api_version': '2024-05-01-preview', 'deployment': 'gpt-4-0125-Preview-spot', 'url': 'https://aims-genalign-spot-swedencentral.openai.azure.com/'}, 
         {'api_version': '2024-05-01-preview', 'deployment': 'gpt-4-0613-spot', 'url': 'https://aims-genalign-spot-polandcentral.openai.azure.com/'}
+        # {'api_version': '1106-Preview', 'deployment': 'tscience-uks-gpt4-1106', 'url': 'https://aims-oai-research-inference-uks.openai.azure.com/'}
     ]
 }
 EXCLUDED_HEADERS = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
