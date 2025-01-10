@@ -29,6 +29,7 @@ def create_config(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
+    plain_output: bool,
 ) -> None:
     """Updates the config object with the given arguments.
 
@@ -163,6 +164,9 @@ def create_config(
 
     if skip_news:
         config.skip_news = True
+        
+    if plain_output:
+        config.plain_output = True
 
 
 def check_model(

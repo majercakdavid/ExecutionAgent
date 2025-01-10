@@ -53,6 +53,7 @@ def run_auto_gpt(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
+    plain_output: bool,
     working_directory: Path,
     workspace_directory: str | Path,
     install_plugin_deps: bool,
@@ -90,6 +91,7 @@ def run_auto_gpt(
         browser_name,
         allow_downloads,
         skip_news,
+        plain_output,
     )
 
     if config.continuous_mode:

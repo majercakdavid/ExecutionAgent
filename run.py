@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 import json
 import argparse
@@ -39,15 +40,28 @@ class SubprocessHandler:
         :param command: List of command arguments or string to run as a subprocess.
         :param success_msg: The message that indicates successful startup.
         :param timeout: Maximum time (in seconds) to wait for the success message.
-        :param check_output: Set to True to read lines from stderr and stdout.
         :param popen_kwargs: Additional keyword arguments to pass to subprocess.Popen.
         """
         self.command = command
         self.success_msg = success_msg
+        self.success_msg_found_event = threading.Event()
         self.timeout = timeout
-        self.check_output = check_output
         self.popen_kwargs = popen_kwargs
         self.process = None
+        self.reader_thread = None
+        
+    def _subprocess_reader_thread(self, stream):
+        """
+        A helper function to read lines from a stream in a separate thread.
+        """
+        while True:
+            line = stream.readline()
+            if not line:  # EOF reached
+                print("\n\n\n!!!EOF reached in subprocess reader thread.!!!\n\n\n")
+                break
+            print(line, end="")
+            if self.success_msg in line:
+                self.success_msg_found_event.set()
 
     def __enter__(self):
         # Start the subprocess
@@ -63,34 +77,20 @@ class SubprocessHandler:
         
         # Determine which stream to read from (stdout by default, or stderr if requested)
         stream = self.process.stdout
+        self.reader_thread = threading.Thread(target=self._subprocess_reader_thread, args=(stream,))
+        self.reader_thread.start()
+        
+        # Wait until the success message is found or timeout
+        if not self.success_msg_found_event.wait(self.timeout):
+            if self.process.poll() is None:
+                self.process.terminate()
+            raise TimeoutError(f"Timeout of {self.timeout} seconds exceeded "
+                               "while waiting for success message.")
 
-        start_time = time.time()
+        # Also check if process ended too soon
+        if self.process.poll() is not None and not self.success_msg_found_event.is_set():
+            raise RuntimeError("Process ended unexpectedly before finding success message.")
 
-        # Continuously read lines until success message or timeout
-        while True:
-            # Check if process has exited unexpectedly
-            if self.process.poll() is not None:
-                raise RuntimeError("Process ended unexpectedly before finding success message.")
-
-            line = stream.readline() if stream else ""
-            print(line, end="")
-            if line:
-                # Optional: print or log the line for debugging
-                print(line, end="")
-
-                if self.success_msg in line:
-                    # Found the success message
-                    break
-
-            # Check for timeout
-            if (time.time() - start_time) > self.timeout:
-                raise TimeoutError(f"Timeout of {self.timeout} seconds exceeded "
-                                   "while waiting for success message.")
-            
-            # Small sleep to avoid busy-waiting
-            time.sleep(0.1)
-
-        # Return self so that we can hold this context
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -102,6 +102,10 @@ class SubprocessHandler:
             except subprocess.TimeoutExpired:
                 # If not terminated in time, forcibly kill it
                 self.process.kill()
+                
+        # Now join the reader thread so we don't leave it hanging
+        if self.reader_thread and self.reader_thread.is_alive():
+            self.reader_thread.join()
 
         # By returning False, we do not suppress any exception.
         return False
@@ -321,5 +325,5 @@ def main():
 if __name__ == "__main__":
     proxy = None
     
-    with SubprocessHandler(["python", "proxy.py"], "Uvicorn running on http://localhost:5555", timeout=60, check_output=True) as proxy:
+    with SubprocessHandler(["python", "proxy.py"], "Uvicorn running on http://localhost:5555", timeout=60) as proxy:
         main()

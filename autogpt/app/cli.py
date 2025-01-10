@@ -59,6 +59,11 @@ import click
     help="Specifies whether to suppress the output of latest news on startup.",
 )
 @click.option(
+    "--plain-output",
+    is_flag=True,
+    help="Specifies whether to suppress the output of latest news on startup.",
+)
+@click.option(
     # TODO: this is a hidden option for now, necessary for integration testing.
     #   We should make this public once we're ready to roll out agent specific workspaces.
     "--workspace-directory",
@@ -109,6 +114,7 @@ def main(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
+    plain_output: bool,
     workspace_directory: str,
     install_plugin_deps: bool,
     ai_name: Optional[str],
@@ -139,6 +145,7 @@ def main(
             browser_name=browser_name,
             allow_downloads=allow_downloads,
             skip_news=skip_news,
+            plain_output=plain_output,
             working_directory=Path(
                 __file__
             ).parent.parent.parent,  # TODO: make this an option
