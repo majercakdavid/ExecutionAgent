@@ -12,6 +12,7 @@ import re
 import string
 import random
 from threading import Thread
+from autogpt.logs import logger
 
 
 class UnitTestStatus(str, Enum):
@@ -194,7 +195,7 @@ class CESClient:
             try:
                 self.ping()
             except Exception as e:
-                print(f"Failed to send heartbeat: {e}")
+                logger.typewriter_log(title="CESClient", content=f"Failed to send heartbeat: {e}")
             time.sleep(60)
 
     def __enter__(self):
@@ -235,7 +236,7 @@ class CESClient:
                     in repr(e)  # 409 error
                     or "Exception: HTTPError('5" in repr(e)  # 500 error
                 ) and failures < 5:
-                    print(
+                    logger.typewriter_log(title="CESClient", content=
                         f"Failed to initialize session: {repr(e)}. Failure counter: {failures}. Retrying..."
                     )
                     # Wait a bit since session pool might be busy
@@ -252,7 +253,7 @@ class CESClient:
     def __exit__(self, exc_type, exc_value, traceback):
         result = self.end_run()
         if exc_type:
-            print(f"Exception occurred: {exc_value}")
+            logger.typewriter_log(title="CESClient", content=f"Exception occurred: {exc_value}")
             raise exc_value
         return result
 
@@ -267,11 +268,11 @@ class CESClient:
             try:
                 url = f"{self.base_url}/api/ces/repo/endRun"
                 self.end_result = self._send_and_raise_status(url=url)
-                print(f"End run result: {self.end_result}")
+                logger.typewriter_log(title="CESClient", content=f"End run result: {self.end_result}")
                 break
             except Exception as e:
                 failures += 1
-                print(f"Failed to end run: {e}")
+                logger.typewriter_log(title="CESClient", content=f"Failed to end run: {e}")
 
         return self.run_id
 
@@ -312,7 +313,7 @@ class CESClient:
                     else:
                         structured_test_results.update(structured_test_result)
                 except Exception as e:
-                    print(f"Failed to parse XML: {e}")
+                    logger.typewriter_log(title="CESClient", content=f"Failed to parse XML: {e}")
         return test_results, report_location_contents, structured_test_results
 
     def run_command(self, command: str, patch: str = None) -> dict:
@@ -352,7 +353,7 @@ class CESClient:
         #     params.append(f"imageId={self.docker_image_id}")
         params.append("sessionPoolId=graysand")
         url = f"{url}?{'&'.join(params)}"
-        print(f"Sending {method} request to {url}, data: {json.dumps(data)}")
+        logger.typewriter_log(title="CESClient", content=f"Sending {method} request to {url}, data: {json.dumps(data)}")
 
         if self.bearer_token_provider:
             headers = {
@@ -399,7 +400,7 @@ class CESClient:
                     break
 
         req_end_time = time.time()
-        print(f"Request took {req_end_time - req_start_time} seconds")
+        logger.typewriter_log(title="CESClient", content=f"Request took {req_end_time - req_start_time} seconds")
         if stream:
             try:
                 response_content = json.loads(response_content)
@@ -463,8 +464,8 @@ class CESClient:
         retrieved_contents, _ = self.view_file(path)
         if "No such file or directory" in retrieved_contents:
             raise Exception(f"Failed to create script file: {retrieved_contents}")
-        elif retrieved_contents.strip() != contents.strip():
-            raise Exception(f"Script contents do not match: {retrieved_contents}")
+        # elif retrieved_contents.strip() != contents.strip():
+        #     raise Exception(f"Script contents do not match: {retrieved_contents}")
         return result
 
     def execute_custom_script(

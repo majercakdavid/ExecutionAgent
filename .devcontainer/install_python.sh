@@ -24,7 +24,8 @@ apt-get update && apt-get install -y \
     libffi-dev \
     curl \
     wget \
-    libbz2-dev
+    libbz2-dev \
+    libopenmpi-dev 
 
 # Download Python 3.10.x source code from the official website
 PYTHON_VERSION="3.10.10"
@@ -54,3 +55,7 @@ rm Python-$PYTHON_VERSION.tgz
 
 # Check if Python 3.10 is installed correctly
 python3 --version
+python3 -m pip install -r requirements.txt
+apt-get install -y \
+    python3-pip \
+    python-is-python3

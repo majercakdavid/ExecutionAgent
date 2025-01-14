@@ -15,7 +15,7 @@
         "result_of_step": []
     },
     "4": {
-        "static_header": "Step 4: Set up the environment, such as adding modules to the PATH directive (e.g., JAVA_HOME) or creating a virtual environment for Python.",
+        "static_header": "Step 4: Set up the environment, such as adding modules to the PATH directive (e.g., JAVA_HOME) if necessary",
         "step_line": "- Use 'linux_terminal' to configure the environment.",
         "result_of_step": []
     },
@@ -31,7 +31,7 @@
     },
     "7": {
         "static_header": "Step 7: Create a bash script for installation steps.",
-        "step_line": "- Use 'write_to_file' to save commands into 'SETUP_AND_INSTALL.sh'.\n- Always create the installation script at the end, after successfully running test cases.\n- Do not try to execute the installation script during the process or attempt to set up everything using the script; instead, use 'linux_terminal'.",
+        "step_line": "- Use 'write_to_file' to save commands into 'SETUP_AND_INSTALL.sh' for environment setup and 'RUN_TESTS.sh' for executing tests.\n- Always create the installation script at the end, after successfully running test cases.\n- Do not try to execute the installation script during the process or attempt to set up everything using the script; instead, use 'linux_terminal'.",
         "result_of_step": []
     }
 }

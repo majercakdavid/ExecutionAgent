@@ -109,6 +109,7 @@ class BaseAgent(metaclass=ABCMeta):
             self.prompt_dictionary["commands"] = tls.read()
 
         
+        self.prompt_dictionary["general_guidelines"] = ""
         if self.hyperparams["language"].lower() == "python":
             self.prompt_dictionary["general_guidelines"]= self.python_guidelines
         elif self.hyperparams["language"].lower() == "java":
@@ -119,8 +120,6 @@ class BaseAgent(metaclass=ABCMeta):
             self.prompt_dictionary["general_guidelines"]= self.c_guidelines
         
         self.prompt_dictionary["general_guidelines"]  += "\nWhen debugging a problem, if an approach does not work for multiple consecutibe iterations, think of changing your approach of addressing the problem.\n"
-        
-        #self.prompt_dictionary["general_guidelines"] = ""
         
         """
         The system prompt sets up the AI's personality and explains its goals,
@@ -169,24 +168,30 @@ class BaseAgent(metaclass=ABCMeta):
         self.left_commands = 0
         self.max_budget = -1
 
-        self.shell = pexpect.spawnu('/bin/bash')
+        # self.shell = pexpect.spawnu('/bin/bash')
         self.interact_with_shell("cd {}".format(os.path.join(self.workspace_path, self.project_path)))
 
         self.commands_and_summary = []
         self.written_files = []
 
         self.container = None
-
+        
+        logger.typewriter_log(content="CREATING THE CONTAINER............")
+        logger.typewriter_log(content="HYPERPARAMS: {}".format(self.hyperparams))
+        logger.typewriter_log(content="IMAGE: {}".format(self.hyperparams["image"]))
+        logger.typewriter_log(content="REPO NAME: {}".format(self.hyperparams.get("repo_name", "NIL")))
+        logger.typewriter_log(content="WORKFLOW CONTENT: {}".format(self.hyperparams.get("workflow_content", "NIL")))
         if self.hyperparams["image"] != "NIL" and 1 == 0:
             self.container = start_container(self.hyperparams["image"])
             if self.container is None:
-                logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
+                logger.typewriter_log(content="ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"
         elif self.hyperparams.get("repo_name", "NIL") != "NIL" and self.hyperparams.get("workflow_content", "NIL") != "NIL":
             self.container = start_ces_container(self.hyperparams["repo_name"], self.hyperparams.get("repo_version", None), self.hyperparams["workflow_content"])
             if self.container is None:
-                logger.info("ERROR HAPPENED WHILE CREATING THE CONTAINER")
+                logger.typewriter_log(content="ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"
+        logger.typewriter_log(content=f"CONTAINER CREATED SUCCESSFULLY, CONTAINER SHORT ID: {self.container.short_id}")
 
         self.found_workflows = self.find_workflows(self.project_path)
         self.search_results = self.search_documentation()
@@ -332,13 +337,16 @@ class BaseAgent(metaclass=ABCMeta):
 
     def interact_with_shell(self, command):
         try:
-            self.shell.sendline(command)
-            self.shell.expect("\$ ", timeout=1500)
-            self.shell.sendline("pwd")
-            self.shell.expect("\$ ", timeout=1500)
+            result = subprocess.run(command, shell=True, check=True)
+            print(f"COMMAND '{command}' EXECUTED SUCCESSFULLY, RESULT:", result)
+            
+            # self.shell.sendline(command)
+            # self.shell.expect("\$ ", timeout=1500)
+            # self.shell.sendline("pwd")
+            # self.shell.expect("\$ ", timeout=1500)
         except Exception as e:
             return ("Error happened: {}".format(e), None)
-        return remove_ansi_escape_sequences(self.shell.before), remove_ansi_escape_sequences(self.shell.after)
+        # return remove_ansi_escape_sequences(self.shell.before), remove_ansi_escape_sequences(self.shell.after)
 
     def validate_command_parsing(self, command_dict):
         with open("commands_interface.json") as cif:
@@ -366,7 +374,7 @@ class BaseAgent(metaclass=ABCMeta):
             json.dump(assistant_outputs+[str(ref_cmd["command"])], aocr)
         try:
             if str(ref_cmd["command"]) in assistant_outputs:
-                logger.info("REPETITION DETECTED!!!!!!!!!!!!!!!!!!!!222222222222222222222")
+                logger.typewriter_log(content="REPETITION DETECTED!!!!!!!!!!!!!!!!!!!!222222222222222222222")
                 return True
             else:
                 return False
@@ -407,7 +415,7 @@ class BaseAgent(metaclass=ABCMeta):
         
         ## This is a line added by me to save prompts at each step
         self.prompt_text = prompt.dump()
-        #logger.info("CURRENT DIRECTORY {}".format(os.getcwd()))
+        #logger.typewriter_log(content="CURRENT DIRECTORY {}".format(os.getcwd()))
         
         prompt_history_fname = os.path.join("experimental_setups", self.exp_number, "logs", "prompt_history_{}".format(self.project_path.replace("/", "")))
         os.makedirs(os.path.dirname(prompt_history_fname), exist_ok=True)
@@ -435,7 +443,7 @@ class BaseAgent(metaclass=ABCMeta):
             )
             repetition = self.detect_command_repetition(response_dict)
             if repetition:
-                logger.info("REPETITION DETECTED, WARNING CODE RR1")
+                logger.typewriter_log(content="REPETITION DETECTED, WARNING CODE RR1")
                 logger.info(str(self.handle_command_repitition(response_dict, self.hyperparams["repetition_handling"])))
                 prompt.extend([Message("user", self.handle_command_repitition(response_dict, self.hyperparams["repetition_handling"]))])
                 new_response = create_chat_completion(

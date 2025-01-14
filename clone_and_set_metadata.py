@@ -57,4 +57,6 @@ if __name__ == "__main__":
     project_directory = clone_repository(github_url, project_name)
 
     # Create metadata file
-    create_metadata_file(project_name, github_url, language, image)
+    # create_metadata_file(project_name, github_url, language, image)
+    import subprocess
+    subprocess.run(["cp", "project_meta_data.json", project_directory])

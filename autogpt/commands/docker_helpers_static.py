@@ -267,8 +267,6 @@ def start_ces_container(repo, repo_version, workflow_content):
         print(f"Running CES container from repo {repo}, workflow content {workflow_content}...")
         container.__enter__()
         print(f"Container {container.short_id} is running.")
-        print("CREATING SCREEN SESSION")
-        create_screen_session(container)
         return container
     except Exception as e:
         print(f"ERROR: An error occurred while running the container: {e}")
@@ -286,10 +284,10 @@ def execute_command_in_container_old(container, command):
         return f"An error occurred while executing the command: {e}"
         return None
 
-def execute_command_in_container(container, command):
+def execute_command_in_container(container, shell_command):
     try:
         # Wrap the command in a shell execution context
-        shell_command = "/bin/sh -c \"{}\"".format(command)
+        # shell_command = "/bin/sh -c \"{}\"".format(command)
         #print(f"Executing command '{command}' in container {container.short_id}...")
 
         # Execute the command without a TTY, but with streaming output

@@ -81,11 +81,10 @@ def main(cfg):
             import json
             with open("valid_repos.json", "r") as f:
                 valid_repos = json.load(f)
-            for i, ratio in enumerate(
-                [
-                    "0:5",
-                ]
-            ):
+            # step = 5
+            # ratios = [f"{start}:{start+step}" for start in list(range(0, 100, step))]
+            ratios = ["0:100"]
+            for i, ratio in enumerate(ratios):
                 ces_step = autogen_fn(
                     data_dir=data_in,
                     data_path="workflows_v1/copilot_ws/",
@@ -107,7 +106,12 @@ def main(cfg):
                 #     type="uri_folder",
                 #     mode="rw_mount",
                 # )
-                ces_step.resources.instance_count = 1
+                ces_step.outputs.output_dir = Output(
+                    path=f"azureml://datastores/codemodeldata_data/paths/damajercak/autogen-setup/{cfg.aml_config.job_name_prefix}/",
+                    type="uri_folder",
+                    mode="rw_mount",
+                )
+                ces_step.resources.instance_count = 100
                 ces_step.compute = cfg.aml_config.cpu_target
                 # ces_step.identity = ManagedIdentityConfiguration(
                 #     client_id="b6fbd023-10ca-4b2f-a869-433b60d90336",

@@ -142,25 +142,34 @@ def parse_args():
     return parser.parse_args()
 
 def get_repo_language(repo_name):
+    most_used_language = ""
+    logger.warning(f"Getting language for repo: {repo_name}")
     import requests
     # GitHub API URL
     url = f"https://api.github.com/repos/{repo_name}/languages"
 
     # Send GET request to the URL
     response = requests.get(url)
+    
+    logger.warning(f"Response: {response}")
 
     # Check if the response is successful
     if response.status_code == 200:
         # Parse JSON response
         languages = response.json()
         
+        logger.warning(f"Languages: {languages}")
+        
         # Find the language with the maximum value
         most_used_language = max(languages, key=languages.get)
         
+        logger.warning(f"Most used language: {most_used_language}")
         # Output the result
         print(most_used_language)
     else:
         print(f"Failed to retrieve data. Status code: {response.status_code}")
+        logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
+    return most_used_language
 
 
 def write_project_meta_data_file(repo_name, repo_version=None):
@@ -174,13 +183,20 @@ def write_project_meta_data_file(repo_name, repo_version=None):
         "language": get_repo_language(repo_name),
         "image": "NIL",
         "repo_name": repo_name,
-        "repo_version": "NIL" if repo_version is None else repo_version,
         "workflow_content": "jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - name: Checkout\n      uses: actions/checkout@v3\n    - name: Run Tests\n      run: echo \"Done\"\n",
         "keep_container": "FALSE"
     }
+    if repo_version is not None:
+        project_meta_data_file["repo_version"] = repo_version
     os.makedirs(f"experimental_setups/files/{repo_name.replace('/', '__')}", exist_ok=True)
     with open("project_meta_data.json", "w") as f:
         json.dump(project_meta_data_file, f)
+        
+    logger.warning(f"Project meta data file written for {repo_name}")
+    logger.warning(f"Project meta data: {project_meta_data_file}")
+    
+    with open("project_meta_data.json", "r") as f:
+        logger.warning(f.read())
         
 def get_highest_numbered_file(directory, prefix):
     """Get the file with the highest number at the end of its name for a given prefix."""
@@ -284,41 +300,61 @@ def main():
     logger.warning(f"Rank: {rank}, Data count: {len(local_data)}")
 
     for instance_id in tqdm(local_data, desc="Processing data"):
-        if os.path.exists(
-            os.path.join(args.output_dir, instance_id, f"workflow_tests.jsonl")
-        ):
-            logger.warning(
-                f"Removing existing file: {os.path.join(args.output_dir, instance_id, f'workflow_tests.jsonl')}"
-            )
-            os.remove(
-                os.path.join(args.output_dir, instance_id, f"workflow_tests.jsonl")
-            )
-            
         WORKFLOW_INFO_FILE = "workflow_info.json"
         if not os.path.exists(
             os.path.join(args.data_path, instance_id, WORKFLOW_INFO_FILE)
         ):
+            output_files_dir = os.path.join(args.output_dir, instance_id.replace('/', '__'))
+            os.makedirs(output_files_dir, exist_ok=True)
+            
+            if os.path.exists(os.path.join(output_files_dir, "RUN_TESTS.sh")) and os.path.exists(os.path.join(output_files_dir, "SETUP_AND_INSTALL.sh")):
+                logger.warning(
+                    f'Instance id: {instance_id}, already processed, skipping...'
+                )
+                continue
+            
             logger.warning(
                 f'Instance id: {instance_id}, missing "{WORKFLOW_INFO_FILE}", path: {os.path.join(args.data_path, instance_id, WORKFLOW_INFO_FILE)}, using latest repo version'
             )
             write_project_meta_data_file(instance_id)
             subprocess.call(f"/bin/bash ExecutionAgent.sh --repo https://github.com/{instance_id} -l 25", shell=True)
-            files_dir = f"experimental_setups/files/{instance_id.replace('/', '__')}"
+            
+            # Read the last line of experiments_list.txt
+            experiments_file = "experimental_setups/experiments_list.txt"
+            with open(experiments_file, 'r') as f:
+                lines = f.readlines()
+                exp_number = lines[-1].strip()
+        
+        
+            files_dir = f"experimental_setups/{exp_number}/files/{instance_id.replace('/', '__')}"
+            logger.warning(f"Instance id: {instance_id}, path: '{files_dir}', listdir: {os.listdir(files_dir)}")
+            
             setup_file = get_highest_numbered_file(files_dir, "SETUP_AND_INSTALL.sh_")
             if setup_file:
                 setup_file_path = os.path.join(files_dir, setup_file)
-                print("="*70)
-                print(f"Latest installation script SETUP_AND_INSTALL.sh: {setup_file_path}")
-                print("="*70)
+                logger.warning("="*70)
+                logger.warning(f"Latest installation script SETUP_AND_INSTALL.sh: {setup_file_path}")
+                logger.warning("="*70)
                 with open(setup_file_path, 'r') as f:
-                    print(f.read())
+                    logger.warning(f.read())
+                subprocess.call(f"cp {setup_file_path} {output_files_dir}/SETUP_AND_INSTALL.sh", shell=True)
             else:
-                print("No SETUP_AND_INSTALL.sh file found.")
+                logger.warning("No SETUP_AND_INSTALL.sh file found.")
                 
-            os.makedirs(
-                os.path.join(args.output_dir, instance_id.replace('/', '__')), exist_ok=True
-            )
-            subprocess.call(f"cp -r experimental_setups/files/{instance_id.replace('/', '__')} {os.path.join(args.output_dir, instance_id.replace('/', '__'))}", shell=True)
+            run_tests_file = get_highest_numbered_file(files_dir, "RUN_TESTS.sh_")
+            if run_tests_file:
+                run_tests_file_path = os.path.join(files_dir, run_tests_file)
+                logger.warning("="*70)
+                logger.warning(f"Latest installation script RUN_TESTS.sh: {run_tests_file_path}")
+                logger.warning("="*70)
+                with open(run_tests_file_path, 'r') as f:
+                    logger.warning(f.read())
+                subprocess.call(f"cp {run_tests_file_path} {output_files_dir}/RUN_TESTS.sh", shell=True)
+            else:
+                logger.warning("No RUN_TESTS.sh file found.")
+
+            # subprocess.call(f"cp -r {files_dir} {output_files_dir}", shell=True)
+            logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}")
             continue
 
 

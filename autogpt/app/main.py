@@ -360,7 +360,8 @@ def run_interaction_loop(
                 os.makedirs("experimental_setups/{}/files/{}".format(agent.exp_number, agent.project_path), exist_ok=True)
 
                 files_list = os.listdir("experimental_setups/{}/files/{}".format(agent.exp_number, agent.project_path))
-
+                
+                logger.typewriter_log(f"Writing file to path: experimental_setups/{agent.exp_number}/files/{agent.project_path}/{simple_name}_{len(files_list)}, with content: {command_args['text']}")
                 with open("experimental_setups/{}/files/{}/{}".format(agent.exp_number, agent.project_path, simple_name+"_{}".format(len(files_list))), "w") as wrf:
                     wrf.write(command_args["text"])
 

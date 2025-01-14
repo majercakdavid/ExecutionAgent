@@ -1,6 +1,6 @@
 ai_goals:
 - Gather installation related iformation and requirements: Gather the info needed for the installation and the running of the project.
-- Write the installation/execution script: Write a bash script (.sh) that allows to install dependencies, prepare the environment and launches test case execution.
+- Write the installation and execution scripts: Write 2 bash scripts (.sh) where the first one allows to install dependencies and prepare the environment, while the second one launches test case execution.
 - Refine the script if necessary: If an error happens or the output is not what expected, refine the script.
 - Analyze the result of running the test suite: Once the script launches the test suite successfully, analyze the results of running the test suite to further check whether there are any major problems (for example, some test cases would fail because the project or environement is not well configured which would mean that the previous goals were not achieved).
 ai_name: ExecutionAgent

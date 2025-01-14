@@ -58,6 +58,19 @@ def main():
             print(f.read())
     else:
         print("No SETUP_AND_INSTALL.sh file found.")
+        
+    # Get the highest-numbered RUN_TESTS.sh
+    run_tests_file = get_highest_numbered_file(files_dir, "RUN_TESTS.sh_")
+    if run_tests_file:
+        run_tests_file_path = os.path.join(files_dir, run_tests_file)
+        print("="*70)
+        print(f"Latest installation script RUN_TESTS.sh: {run_tests_file_path}")
+        print("="*70)
+        with open(run_tests_file_path, 'r') as f:
+            print(f.read())
+    else:
+        print("No RUN_TESTS.sh file found.")
+
 
     # Check for SUCCESS file in saved_contexts directory
     success_file = f"experimental_setups/{last_line}/saved_contexts/{project_name}/SUCCESS"
