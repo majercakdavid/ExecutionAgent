@@ -1,4 +1,5 @@
 import os
+import requests
 import threading
 import time
 import json
@@ -142,37 +143,83 @@ def parse_args():
     return parser.parse_args()
 
 def get_repo_language(repo_name):
-    most_used_language = ""
+    most_used_language = None
     logger.warning(f"Getting language for repo: {repo_name}")
-    import requests
-    # GitHub API URL
-    url = f"https://api.github.com/repos/{repo_name}/languages"
-
-    # Send GET request to the URL
-    response = requests.get(url)
+    retries = 10
     
-    logger.warning(f"Response: {response}")
+    while retries > 0:
+        try:  
+            # GitHub API URL
+            url = f"https://api.github.com/repos/{repo_name}/languages"
 
-    # Check if the response is successful
-    if response.status_code == 200:
-        # Parse JSON response
-        languages = response.json()
-        
-        logger.warning(f"Languages: {languages}")
-        
-        # Find the language with the maximum value
-        most_used_language = max(languages, key=languages.get)
-        
-        logger.warning(f"Most used language: {most_used_language}")
-        # Output the result
-        print(most_used_language)
-    else:
-        print(f"Failed to retrieve data. Status code: {response.status_code}")
-        logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
+            # Send GET request to the URL
+            response = requests.get(url)
+            
+            logger.warning(f"Response: {response}")
+            
+            # Check if the response is successful
+            if response.status_code != 200:
+                logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
+                retries -= 1
+                time.sleep(30)
+            else:
+                # Parse JSON response
+                languages = response.json()
+                
+                logger.warning(f"Languages: {languages}")
+                
+                # Find the language with the maximum value
+                most_used_language = max(languages, key=languages.get)
+                
+                logger.warning(f"Most used language: {most_used_language}")
+                break
+        except Exception as e:
+            logger.warning(f"Error: {repr(e)}")
+            retries -= 1
+            time.sleep(30)
+    
     return most_used_language
 
+def get_repo_sha(repo_name):
+    sha = None
+    logger.warning(f"Getting SHA for repo: {repo_name}")
+    retries = 10
+    
+    while retries > 0:
+        try:  
+            # GitHub API URL
+            url = f"https://api.github.com/repos/{repo_name}/commits?page=1&per_page=1"
 
-def write_project_meta_data_file(repo_name, repo_version=None):
+            # Send GET request to the URL
+            response = requests.get(url)
+            
+            logger.warning(f"Response: {response}")
+            
+            # Check if the response is successful
+            if response.status_code != 200:
+                logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
+                retries -= 1
+                time.sleep(30)
+            else:
+                # Parse JSON response
+                commits = response.json()
+                
+                logger.warning(f"Commits: {commits}")
+                
+                # Find the language with the maximum value
+                sha = commits[0]["sha"]
+                
+                logger.warning(f"SHA: {sha}")
+                break
+        except Exception as e:
+            logger.warning(f"Error: {repr(e)}")
+            retries -= 1
+            time.sleep(30)
+    
+    return sha
+
+
+def write_project_meta_data_file(repo_name, repo_language=None, repo_version=None):
     project_meta_data_file = {
         "repetition_handling": "RESTRICT",
         "project_path": repo_name.replace("/", "__"),
@@ -180,7 +227,7 @@ def write_project_meta_data_file(repo_name, repo_version=None):
         "budget_control": {
             "name": "NO-TRACK"
         },
-        "language": get_repo_language(repo_name),
+        "language": repo_language,
         "image": "NIL",
         "repo_name": repo_name,
         "workflow_content": "jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - name: Checkout\n      uses: actions/checkout@v3\n    - name: Run Tests\n      run: echo \"Done\"\n",
@@ -297,6 +344,7 @@ def main():
 
     # Round robin distribution
     local_data = [data[i] for i in range(rank, len(data), world_size)]
+    # local_data = ["github/github"]
     logger.warning(f"Rank: {rank}, Data count: {len(local_data)}")
 
     for instance_id in tqdm(local_data, desc="Processing data"):
@@ -316,8 +364,20 @@ def main():
             logger.warning(
                 f'Instance id: {instance_id}, missing "{WORKFLOW_INFO_FILE}", path: {os.path.join(args.data_path, instance_id, WORKFLOW_INFO_FILE)}, using latest repo version'
             )
-            write_project_meta_data_file(instance_id)
-            subprocess.call(f"/bin/bash ExecutionAgent.sh --repo https://github.com/{instance_id} -l 25", shell=True)
+            repo_version = get_repo_sha(instance_id)
+            repo_language = get_repo_language(instance_id)
+            
+            if repo_language is None or repo_version is None:
+                logger.warning(f"Skipping instance {instance_id} as language or version could not be determined")
+                continue
+            
+            # repo_language = repo_language.lower()
+            # if repo_language != "java" and repo_language != "kotlin":
+            #     logger.warning(f"Skipping instance {instance_id} as it is not a Java project")
+            #     continue
+            
+            write_project_meta_data_file(instance_id, repo_language, repo_version)
+            subprocess.call(f"/bin/bash ExecutionAgent.sh --repo https://github.com/{instance_id} -l 40", shell=True)
             
             # Read the last line of experiments_list.txt
             experiments_file = "experimental_setups/experiments_list.txt"
@@ -352,6 +412,13 @@ def main():
                 subprocess.call(f"cp {run_tests_file_path} {output_files_dir}/RUN_TESTS.sh", shell=True)
             else:
                 logger.warning("No RUN_TESTS.sh file found.")
+                
+            if run_tests_file is None or setup_file is None:
+                logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}, missing files, removing directory")
+                subprocess.call(f"rm -rf {output_files_dir}", shell=True)
+            else:
+                with open(os.path.join(output_files_dir, "meta.json"), "w") as f:
+                    f.write(json.dumps({"repo": instance_id, "repo_version": repo_version, "language": repo_language}))
 
             # subprocess.call(f"cp -r {files_dir} {output_files_dir}", shell=True)
             logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}")

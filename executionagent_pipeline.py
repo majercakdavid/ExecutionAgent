@@ -107,11 +107,11 @@ def main(cfg):
                 #     mode="rw_mount",
                 # )
                 ces_step.outputs.output_dir = Output(
-                    path=f"azureml://datastores/codemodeldata_data/paths/damajercak/autogen-setup/{cfg.aml_config.job_name_prefix}/",
+                    path=f"azureml://datastores/codemodeldata_data/paths/damajercak/autogen-setup/{cfg.aml_config.job_name_prefix}-junitxml/",
                     type="uri_folder",
                     mode="rw_mount",
                 )
-                ces_step.resources.instance_count = 100
+                ces_step.resources.instance_count = 50
                 ces_step.compute = cfg.aml_config.cpu_target
                 # ces_step.identity = ManagedIdentityConfiguration(
                 #     client_id="b6fbd023-10ca-4b2f-a869-433b60d90336",
