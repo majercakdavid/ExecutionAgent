@@ -16,7 +16,7 @@ from autogpt.agents.agent import Agent
 from autogpt.command_decorator import command
 from autogpt.logs import logger
 from autogpt.memory.vector import MemoryItem, VectorMemory
-from autogpt.commands.docker_helpers_static import build_image, start_container, execute_command_in_container, write_string_to_file, read_file_from_container, check_image_exists
+from autogpt.commands.docker_helpers_static import build_image, start_ces_container, start_container, execute_command_in_container, write_string_to_file, read_file_from_container, check_image_exists
 from .decorators import sanitize_path_arg
 from .file_operations_utils import read_textual_file
 
@@ -338,13 +338,52 @@ def write_to_file(filename: str, text: str, agent: Agent) -> str:
         if "dockerfile" in filename.lower():
             return "You cannot create another docker image, you already have access to a running container. If a pacakge is missing or error happened during installation, you can debug and fix the problem inside the running container by interacting with the linux_terminal tool."
         write_result = str(write_string_to_file(agent.container, text, filename))
-        if write_result=="None":
-            if "setup" in filename.lower() or "install" in filename.lower() or ".sh" in filename.lower():
-                return "installation script was written successfully, you should not run this script. If test cases were not yet run, you should do that with the help of linux_terminal. If you arleady run test cases successfully, you are done with the task."
-            else:
-                return "File written successfully."
-        else:
+        if write_result != "None":
             return write_result
+        
+        run_tests_files = [file for file in agent.written_files if "RUN_TESTS" in file[0]]
+        run_setup_install_files = [file for file in agent.written_files if "SETUP_AND_INSTALL" in file[0]]
+        if len(run_tests_files) > 0 and len(run_setup_install_files) > 0:
+            container = start_ces_container(agent.hyperparams["repo_name"], agent.hyperparams.get("repo_version", None), agent.hyperparams["workflow_content"])
+            
+            if container is not None:
+                agent.container.remove()
+                agent.container = container
+                pwd, pwd_exit_code = execute_command_in_container(container, "pwd")
+                if pwd_exit_code != 0:
+                    return "The container was launched successfully, but the current working directory could not be found. Please fix the error and try again. Error message: " + pwd
+                
+                run_test_file = run_tests_files[-1]
+                run_setup_install_file = run_setup_install_files[-1]
+                write_result = str(write_string_to_file(agent.container, run_test_file[1], run_test_file[0]))
+                write_result = str(write_string_to_file(agent.container, run_setup_install_file[1], run_setup_install_file[0]))
+                msg =  "Clean container launched successfuly\nThe current working directory within the container is: {}".format(pwd)
+            
+                setup_install_res = container.exec_run(f'chmod +x {run_setup_install_file[0]} && ./{run_setup_install_file[0]}')
+                if setup_install_res.exit_code != 0:
+                    return msg + "\nThe setup and installation script failed to run, please fix the error, update files, and try again. Error message: " + setup_install_res.output.decode("utf-8")
+                
+                tests_res = container.exec_run(f'chmod +x {run_test_file[0]} && ./{run_test_file[0]}')
+                if tests_res.exit_code != 0:
+                    return msg + "\nThe test cases failed to run, please fix the error, update files, and try again. Error message: " + tests_res.output.decode("utf-8")
+                
+                try:
+                    junit_xml_files = container.list_files("./junit_xml_reports")
+                    junit_xml_files = [
+                        f["name"] for f in junit_xml_files[0]["contents"] if f["name"].endswith(".xml")
+                    ]
+                    if len(junit_xml_files) > 0:
+                        return msg + "\nTest cases ran successfully. Files found in junit_xml_reports directory:\n" + "\n".join(junit_xml_files)
+                    else:
+                        return msg + "\nThere are no junit xml files generated after running the test cases, please fix the error, update files, and try again."
+                except Exception as e:
+                    return msg + "\nThere are no junit xml files generated after running the test cases, please fix the error, update files, and try again."
+    
+        if "setup" in filename.lower() or "install" in filename.lower() or ".sh" in filename.lower():
+            return "installation script was written successfully, you should not run this script. If test cases were not yet run, you should do that with the help of linux_terminal. If you arleady run test cases successfully, you are done with the task."
+        else:
+            return "File written successfully."
+
 @sanitize_path_arg("filename")
 def append_to_file(
     filename: str, text: str, agent: Agent, should_log: bool = True
