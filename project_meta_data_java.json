@@ -1,13 +1,13 @@
 {
     "repetition_handling": "RESTRICT",
-    "project_path": "pipetools",
-    "project_url": "https://github.com/0101/pipetools",
+    "project_path": "Balance-Talk-Backend",
+    "project_url": "https://github.com/CHZZK-Study/Balance-Talk-Backend",
     "budget_control": {
         "name": "NO-TRACK"
     },
-    "language": "Python",
+    "language": "Java",
     "image": "",
-    "repo_name": "0101/pipetools",
+    "repo_name": "CHZZK-Study/Balance-Talk-Backend",
     "workflow_content": "jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - name: Checkout\n      uses: actions/checkout@v3\n    - name: Run Tests\n      run: echo \"Done\"\n",
     "keep_container": "FALSE"
 }
