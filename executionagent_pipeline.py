@@ -81,9 +81,9 @@ def main(cfg):
             import json
             with open("valid_repos.json", "r") as f:
                 valid_repos = json.load(f)
-            # step = 5
-            # ratios = [f"{start}:{start+step}" for start in list(range(0, 100, step))]
-            ratios = ["0:100"]
+            step = 20
+            ratios = [f"{start}:{start+step}" for start in list(range(0, 100, step))]
+            # ratios = ["0:100"]
             for i, ratio in enumerate(ratios):
                 ces_step = autogen_fn(
                     data_dir=data_in,
@@ -107,7 +107,7 @@ def main(cfg):
                 #     mode="rw_mount",
                 # )
                 ces_step.outputs.output_dir = Output(
-                    path=f"azureml://datastores/codemodeldata_data/paths/damajercak/autogen-setup/{cfg.aml_config.job_name_prefix}-junitxml/",
+                    path=f"azureml://datastores/codemodeldata_data/paths/damajercak/autogen-setup/{cfg.aml_config.job_name_prefix}-junitxml-v2/",
                     type="uri_folder",
                     mode="rw_mount",
                 )
