@@ -191,6 +191,11 @@ class BaseAgent(metaclass=ABCMeta):
             if self.container is None:
                 logger.typewriter_log(content="ERROR HAPPENED WHILE CREATING THE CONTAINER")
                 self.hyperparams["image"] = "NIL"
+                
+        if self.container is None:
+            import sys
+            sys.exit(1)
+
         logger.typewriter_log(content=f"CONTAINER CREATED SUCCESSFULLY, CONTAINER SHORT ID: {self.container.short_id}")
 
         self.found_workflows = self.find_workflows(self.project_path)
