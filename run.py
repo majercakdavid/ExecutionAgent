@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 import threading
 import time
@@ -161,7 +162,7 @@ def get_repo_language(repo_name):
             if response.status_code != 200:
                 logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
                 retries -= 1
-                time.sleep(30)
+                time.sleep(random.randint(30, 600))
             else:
                 # Parse JSON response
                 languages = response.json()
@@ -199,7 +200,7 @@ def get_repo_sha(repo_name):
             if response.status_code != 200:
                 logger.warning(f"Failed to retrieve data. Status code: {response.status_code}")
                 retries -= 1
-                time.sleep(30)
+                time.sleep(random.randint(30, 600))
             else:
                 # Parse JSON response
                 commits = response.json()
@@ -354,6 +355,7 @@ def main():
         ):
             output_files_dir = os.path.join(args.output_dir, instance_id.replace('/', '__'))
             os.makedirs(output_files_dir, exist_ok=True)
+            meta_file_path = os.path.join(output_files_dir, "meta.json")
             
             if os.path.exists(os.path.join(output_files_dir, "RUN_TESTS.sh")) and os.path.exists(os.path.join(output_files_dir, "SETUP_AND_INSTALL.sh")):
                 logger.warning(
@@ -364,12 +366,29 @@ def main():
             logger.warning(
                 f'Instance id: {instance_id}, missing "{WORKFLOW_INFO_FILE}", path: {os.path.join(args.data_path, instance_id, WORKFLOW_INFO_FILE)}, using latest repo version'
             )
-            repo_version = get_repo_sha(instance_id)
-            repo_language = get_repo_language(instance_id)
             
+            repo_version, repo_language = None, None
+            try:
+                if os.path.exists(meta_file_path):
+                    with open(meta_file_path, "r") as f:
+                        meta = json.load(f)
+                        repo_version = meta.get("repo_version", None)
+                        repo_language = meta.get("language", None)
+            except Exception as e:
+                logger.warning(f"Error: {repr(e)} when reading meta file")
+            
+            if repo_version is None: 
+                repo_version = get_repo_sha(instance_id)
+            if repo_language is None:
+                repo_language = get_repo_language(instance_id)
+            logger.warning(f"Repo version: {repo_version}, Repo language: {repo_language}")
+                
             if repo_language is None or repo_version is None:
                 logger.warning(f"Skipping instance {instance_id} as language or version could not be determined")
                 continue
+            
+            with open(meta_file_path, "w") as f:
+                f.write(json.dumps({"repo": instance_id, "repo_version": repo_version, "language": repo_language}))
             
             # repo_language = repo_language.lower()
             # if repo_language != "java" and repo_language != "kotlin":
@@ -387,41 +406,41 @@ def main():
         
         
             files_dir = f"experimental_setups/{exp_number}/files/{instance_id.replace('/', '__')}"
-            logger.warning(f"Instance id: {instance_id}, path: '{files_dir}', listdir: {os.listdir(files_dir)}")
+            if os.path.exists(files_dir):
+                logger.warning(f"Instance id: {instance_id}, path: '{files_dir}', listdir: {os.listdir(files_dir)}")
             
-            setup_file = get_highest_numbered_file(files_dir, "SETUP_AND_INSTALL.sh_")
-            if setup_file:
-                setup_file_path = os.path.join(files_dir, setup_file)
-                logger.warning("="*70)
-                logger.warning(f"Latest installation script SETUP_AND_INSTALL.sh: {setup_file_path}")
-                logger.warning("="*70)
-                with open(setup_file_path, 'r') as f:
-                    logger.warning(f.read())
-                subprocess.call(f"cp {setup_file_path} {output_files_dir}/SETUP_AND_INSTALL.sh", shell=True)
+                setup_file = get_highest_numbered_file(files_dir, "SETUP_AND_INSTALL.sh_")
+                if setup_file:
+                    setup_file_path = os.path.join(files_dir, setup_file)
+                    logger.warning("="*70)
+                    logger.warning(f"Latest installation script SETUP_AND_INSTALL.sh: {setup_file_path}")
+                    logger.warning("="*70)
+                    with open(setup_file_path, 'r') as f:
+                        logger.warning(f.read())
+                    subprocess.call(f"cp {setup_file_path} {output_files_dir}/SETUP_AND_INSTALL.sh", shell=True)
+                else:
+                    logger.warning("No SETUP_AND_INSTALL.sh file found.")
+                    
+                run_tests_file = get_highest_numbered_file(files_dir, "RUN_TESTS.sh_")
+                if run_tests_file:
+                    run_tests_file_path = os.path.join(files_dir, run_tests_file)
+                    logger.warning("="*70)
+                    logger.warning(f"Latest installation script RUN_TESTS.sh: {run_tests_file_path}")
+                    logger.warning("="*70)
+                    with open(run_tests_file_path, 'r') as f:
+                        logger.warning(f.read())
+                    subprocess.call(f"cp {run_tests_file_path} {output_files_dir}/RUN_TESTS.sh", shell=True)
+                else:
+                    logger.warning("No RUN_TESTS.sh file found.")
+                    
+                if run_tests_file is None or setup_file is None:
+                    logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}, missing files")
+                    # subprocess.call(f"rm -rf {output_files_dir}", shell=True)
+                else:
+                    logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}")
             else:
-                logger.warning("No SETUP_AND_INSTALL.sh file found.")
-                
-            run_tests_file = get_highest_numbered_file(files_dir, "RUN_TESTS.sh_")
-            if run_tests_file:
-                run_tests_file_path = os.path.join(files_dir, run_tests_file)
-                logger.warning("="*70)
-                logger.warning(f"Latest installation script RUN_TESTS.sh: {run_tests_file_path}")
-                logger.warning("="*70)
-                with open(run_tests_file_path, 'r') as f:
-                    logger.warning(f.read())
-                subprocess.call(f"cp {run_tests_file_path} {output_files_dir}/RUN_TESTS.sh", shell=True)
-            else:
-                logger.warning("No RUN_TESTS.sh file found.")
-                
-            if run_tests_file is None or setup_file is None:
-                logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}, missing files, removing directory")
-                subprocess.call(f"rm -rf {output_files_dir}", shell=True)
-            else:
-                with open(os.path.join(output_files_dir, "meta.json"), "w") as f:
-                    f.write(json.dumps({"repo": instance_id, "repo_version": repo_version, "language": repo_language}))
+                logger.warning(f"Instance id: {instance_id}, path: '{files_dir}', not found")
 
-            # subprocess.call(f"cp -r {files_dir} {output_files_dir}", shell=True)
-            logger.warning(f"Instance id: {instance_id}, path: '{output_files_dir}', listdir: {os.listdir(output_files_dir)}")
             continue
 
 
