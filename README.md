@@ -20,10 +20,11 @@ To get started in a VSCode Dev Container:
 - **Dual Mode Execution**: Run ExecutionAgent with a batch file or directly with a GitHub repository URL.  
 - **Autonomous Workflow**: Clone, build, and test GitHub projects with no human intervention (we will add human-in-the-loop soon).
 - **Language Support**: Multiple languages like Python, C, C++, Java, JavaScript, and more.  
-- **Dev Container Integration**: Preconfigured for VSCode Dev Containers for seamless development.  
+- **Dev Container Integration**: Preconfigured for VSCode Dev Containers for seamless development.
+- **GitHub Repository Search**: Search and discover similar repositories on GitHub using the built-in search command.  
 - **Metrics** (based on evaluation set of 50 projects):  
   - Build Success Rate: **80%**  
-  - Test Success Rate: **65%**  
+  - Test Success Rate: **65%**
 
 ---
 
@@ -75,6 +76,35 @@ To clean all the logs and unset the api token, you can use the following command
 ```sh
 ./clean.sh
 ```
+
+---
+
+## 🔍 Searching for Similar Repositories
+
+ExecutionAgent includes functionality to search GitHub for repositories similar to this project. This can help you discover other automation tools, CI/CD solutions, and agent-based systems.
+
+### Using the Search Script
+
+Run the standalone search script:
+```bash
+python3 search_similar_repositories.py
+```
+
+With custom options:
+```bash
+# Search with more results
+python3 search_similar_repositories.py -n 20
+
+# Add additional keywords
+python3 search_similar_repositories.py -k "continuous integration" "docker"
+
+# Save results to a file
+python3 search_similar_repositories.py -o results.json
+```
+
+### Using the Agent Command
+
+The agent also has a built-in `search_github_repos` command that can be used during execution to find similar repositories. This command searches GitHub's repository database and returns relevant results sorted by popularity (stars).
 
 ---
 

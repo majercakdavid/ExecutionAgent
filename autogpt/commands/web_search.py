@@ -180,3 +180,77 @@ def safe_google_results(results: str | list) -> str:
     else:
         safe_message = results.encode("utf-8", "ignore").decode("utf-8")
     return safe_message
+
+
+@command(
+    "search_github_repos",
+    "Search GitHub for similar repositories",
+    {
+        "query": {
+            "type": "string",
+            "description": "Search query for GitHub repositories (e.g., 'autonomous agents', 'build automation')",
+            "required": True,
+        },
+        "num_results": {
+            "type": "integer",
+            "description": "Number of results to return (default: 10)",
+            "required": False,
+        }
+    },
+)
+def search_github_repos(query: str, agent: Agent, num_results: int = 10) -> str:
+    """Search GitHub for repositories matching the query
+    
+    Args:
+        query (str): The search query
+        num_results (int): Number of results to return (default: 10)
+        
+    Returns:
+        str: JSON string containing repository information
+    """
+    import requests
+    
+    # GitHub API endpoint for repository search
+    url = "https://api.github.com/search/repositories"
+    
+    # Parameters for the search
+    params = {
+        "q": query,
+        "sort": "stars",
+        "order": "desc",
+        "per_page": min(num_results, 100)  # GitHub API max is 100
+    }
+    
+    try:
+        # Send request to GitHub API
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            repos = []
+            
+            for item in data.get("items", [])[:num_results]:
+                repo_info = {
+                    "name": item.get("name"),
+                    "full_name": item.get("full_name"),
+                    "description": item.get("description"),
+                    "url": item.get("html_url"),
+                    "stars": item.get("stargazers_count"),
+                    "language": item.get("language"),
+                    "forks": item.get("forks_count"),
+                    "topics": item.get("topics", []),
+                    "updated_at": item.get("updated_at"),
+                }
+                repos.append(repo_info)
+            
+            return json.dumps(repos, indent=2, ensure_ascii=False)
+        else:
+            return json.dumps({
+                "error": f"GitHub API request failed with status code {response.status_code}",
+                "message": response.text
+            })
+    except requests.RequestException as e:
+        return json.dumps({
+            "error": "Request failed",
+            "message": str(e)
+        })
