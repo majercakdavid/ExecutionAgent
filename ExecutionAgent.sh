@@ -1,29 +1,65 @@
 #!/bin/bash
+#
+# ExecutionAgent Main Script
+# 
+# This script is the primary entry point for ExecutionAgent. It handles both single
+# repository and batch file modes, manages retries, and orchestrates the entire
+# build and test workflow.
+#
+# Usage:
+#   Single repository mode:
+#     ./ExecutionAgent.sh --repo <github_repo_url> -l <num_cycles>
+#
+#   Batch file mode:
+#     ./ExecutionAgent.sh /path/to/batch_file.txt -l <num_cycles>
+#
+# Options:
+#   --repo    : GitHub repository URL to process
+#   -l        : Number of action cycles per attempt (default: 40)
+#
+# Examples:
+#   ./ExecutionAgent.sh --repo https://github.com/pytest-dev/pytest -l 50
+#   ./ExecutionAgent.sh projects.txt -l 60
+#
 
-# Default value for the number parameter
+# Default number of action cycles per attempt
 num=40
 
 # Function to extract project name from GitHub URL
 # Extracts the last component of the URL, which is usually the project name
+# Args:
+#   $1 - GitHub repository URL
+# Returns:
+#   Project name (e.g., "pytest" from "https://github.com/pytest-dev/pytest")
 extract_project_name() {
   local url="$1"
   echo "$url" | awk -F '/' '{print $(NF)}'
 }
 
-# Function to run the command and handle retries
+# Function to run the command and handle retries with learning
+# This implements the retry logic where each attempt learns from previous failures
+# Args:
+#   $1 - Command to execute
+#   $2 - Project name
+# Returns:
+#   None (exits on success or user abort)
 run_with_retries() {
   local command="$1"
   local project_name="$2"
-  local max_retries=2
+  local max_retries=2  # Total attempts will be max_retries + 1 = 3
   local attempt=1
 
+  # Automatic retry loop (3 attempts by default)
   while [[ $attempt -le $max_retries ]]; do
     echo "======================================================================"
     echo "STARTING ITERATION $attempt:"
     echo "PROJECT: $project_name"
     echo "======================================================================"
 
+    # Execute the build/test command
     eval "$command"
+    
+    # Check if the attempt succeeded
     result=$(python3.10 post_process.py "$project_name")
 
     if [[ "$result" == "SUCCESS" ]]; then
@@ -35,6 +71,7 @@ run_with_retries() {
     ((attempt++))
   done
 
+  # Interactive retry loop - prompts user after automatic retries exhausted
   while true; do
     echo "======================================================================"
     echo "PROMPTING USER FOR ADDITIONAL RETRY:"
@@ -43,14 +80,21 @@ run_with_retries() {
 
     read -p "Post-process failed after $max_retries attempts. Do you want to retry again? (yes/no): " user_input
     case "$user_input" in
-      [Yy]* ) eval "$command"; result=$(python3.10 post_process.py "$project_name");
-              if [[ "$result" == "SUCCESS" ]]; then
-                echo "Post-process succeeded."
-                return
-              fi
-              ;;
-      [Nn]* ) echo "Exiting retry loop."; break;;
-      * ) echo "Please answer yes or no.";;
+      [Yy]* ) 
+        eval "$command"
+        result=$(python3.10 post_process.py "$project_name")
+        if [[ "$result" == "SUCCESS" ]]; then
+          echo "Post-process succeeded."
+          return
+        fi
+        ;;
+      [Nn]* ) 
+        echo "Exiting retry loop."
+        break
+        ;;
+      * ) 
+        echo "Please answer yes or no."
+        ;;
     esac
   done
 }
@@ -72,71 +116,80 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Set up API key, increment experiment, and prepare AI settings
-python3.10 setup_api_key.py  # Sets up the API key required for the scripts
-python3.10 experimental_setups/increment_experiment.py  # Updates experimental parameters
-python3.10 prepare_ai_settings.py  # Prepares the AI settings configuration
+# Initialize ExecutionAgent environment
+python3.10 setup_api_key.py                           # Sets up OpenAI API key
+python3.10 experimental_setups/increment_experiment.py  # Creates new experiment directory
+python3.10 prepare_ai_settings.py                      # Prepares AI configuration
 
-# Check for the --repo argument or file path
+# Handle single repository mode (--repo argument provided)
 if [[ -n "$repo_url" ]]; then
-  # Ensure the user provided a GitHub URL with the --repo argument
+  # Validate that a URL was actually provided
   if [[ -z "$repo_url" ]]; then
     echo "Error: --repo argument requires a GitHub URL."
-    echo "Usage: ./script_name.sh --repo <github_repo_url>"
+    echo "Usage: ./ExecutionAgent.sh --repo <github_repo_url> -l <num_cycles>"
     exit 1
   fi
 
-  # Extract the project name from the provided GitHub URL
+  # Extract the project name from the GitHub URL
   project_name=$(extract_project_name "$repo_url")
 
-  # Call get_main_language.py to determine the main language of the repository
-  # The Python script is expected to return a string like "Primary language: <language>"
+  # Detect the primary programming language of the repository
   primary_language=$(python3.10 get_main_language.py "$repo_url")
-  echo "$primary_language"
+  echo "Primary language: $primary_language"
 
-  # Continue processing for a single repository
-  echo "$project_name"  # Print the project name
-  echo "$repo_url"      # Print the GitHub URL
+  # Display processing information
+  echo "Processing project: $project_name"
+  echo "Repository URL: $repo_url"
 
-  # Initialize an empty Docker configuration file
+  # Initialize Docker configuration
   echo "{}" > ~/.docker/config.json
 
-  # Call the Python script to clone the repo and set metadata
+  # Clone repository and set up metadata
   python3.10 clone_and_set_metadata.py "$project_name" "$repo_url" "$primary_language"
 
-  # Run the main script with specific AI settings and experiment parameters
+  # Run ExecutionAgent with retries
   run_with_retries "./run.sh --ai-settings ai_settings.yaml -c -l \"$num\" -m json_file --experiment-file \"project_meta_data.json\"" "$project_name"
 
+# Handle batch file mode (file path provided)
 elif [[ -f "$repo_url" ]]; then
-  # Handle the case where the input is a file containing multiple repositories
   file_path="$repo_url"
-  echo "Using file path: $file_path"  # Print the file path being processed
+  echo "Processing batch file: $file_path"
 
-  # Read the file line by line
+  # Read and process each line in the batch file
+  # Expected format: <project_name> <github_url> <language>
   while IFS= read -r line; do
-      # Parse each line to extract project name, GitHub URL, and language
+      # Skip empty lines
+      [[ -z "$line" ]] && continue
+      
+      # Parse line components
       project_name=$(echo "$line" | awk '{print $1}')
       github_url=$(echo "$line" | awk '{print $2}')
       language=$(echo "$line" | awk '{print $3}')
 
-      echo "$project_name"  # Print the project name
-      echo "$github_url"    # Print the GitHub URL
-      echo "$language"      # Print the specified language
+      echo "Processing project: $project_name"
+      echo "Repository URL: $github_url"
+      echo "Language: $language"
 
-      # Initialize an empty Docker configuration file
+      # Initialize Docker configuration
       echo "{}" > ~/.docker/config.json
 
-      # Call the Python script to clone the repo and set metadata
+      # Clone repository and set up metadata
       python3.10 clone_and_set_metadata.py "$project_name" "$github_url" "$language"
 
-      # Run the main script with specific AI settings and experiment parameters
+      # Run ExecutionAgent with retries
       run_with_retries "./run.sh --ai-settings ai_settings.yaml -c -l \"$num\" -m json_file --experiment-file \"project_meta_data.json\"" "$project_name"
   done < "$file_path"
 
 else
-  # Handle invalid input cases
-  echo "Error: Invalid input. Provide a file path or use --repo <github_repo_url>."
-  echo "Usage: ./script_name.sh /path/to/file"
-  echo "       ./script_name.sh --repo <github_repo_url>"
+  # Handle invalid input
+  echo "Error: Invalid input. Provide a batch file path or use --repo <github_repo_url>."
+  echo ""
+  echo "Usage:"
+  echo "  Single repository: ./ExecutionAgent.sh --repo <github_repo_url> -l <num_cycles>"
+  echo "  Batch file:       ./ExecutionAgent.sh /path/to/batch_file.txt -l <num_cycles>"
+  echo ""
+  echo "Examples:"
+  echo "  ./ExecutionAgent.sh --repo https://github.com/pytest-dev/pytest -l 50"
+  echo "  ./ExecutionAgent.sh projects.txt -l 60"
   exit 1
 fi
