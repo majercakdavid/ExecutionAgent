@@ -14,6 +14,11 @@ To get started in a VSCode Dev Container:
 2. Clone this repository.  
 3. Open the repository in VSCode, and it will prompt you to reopen in the dev container. Alternatively, use a command to open the current folder in a dev container.  
 
+**System Requirements:**
+- Python 3.10 or higher (3.12+ recommended)
+- Docker for containerized builds
+- 4GB+ RAM recommended  
+
 ---
 
 ## ✨ Key Features  
@@ -21,6 +26,7 @@ To get started in a VSCode Dev Container:
 - **Autonomous Workflow**: Clone, build, and test GitHub projects with no human intervention (we will add human-in-the-loop soon).
 - **Language Support**: Multiple languages like Python, C, C++, Java, JavaScript, and more.  
 - **Dev Container Integration**: Preconfigured for VSCode Dev Containers for seamless development.  
+- **Modern AI Stack**: Powered by latest OpenAI API (2.x), LangChain (0.3.x), and FastAPI (0.118.x)
 - **Metrics** (based on evaluation set of 50 projects):  
   - Build Success Rate: **80%**  
   - Test Success Rate: **65%**  
@@ -120,6 +126,21 @@ The folder structure under `experimental_setups/experiment_XX` is organized to k
 - **saved_contexts**: Contains the saved states of the agent object at each iteration of the execution process. These snapshots are useful for debugging, tracking changes, and extracting subcomponents of the prompt across different cycles.  
   - Example: `cycle_1`, `cycle_10`, etc.  
 
+
+---
+
+## 🆕 Recent Updates (October 2025)
+
+ExecutionAgent has been updated with the latest technologies and trends:
+
+- **Updated Dependencies**: All major dependencies updated to latest stable versions
+  - OpenAI Python SDK upgraded to 2.3.0 (from 0.27.8)
+  - LangChain upgraded to 0.3.7 with modular components
+  - FastAPI upgraded to 0.118.2 for improved performance
+  - pytest upgraded to 8.4.0 with enhanced testing capabilities
+- **Python Version Support**: Now supports Python 3.10 through 3.13
+- **Improved Compatibility**: Scripts updated to use `python3` for better cross-platform support
+- **Security**: Latest dependency versions include security patches and vulnerability fixes
 
 ---
 

@@ -24,7 +24,7 @@ run_with_retries() {
     echo "======================================================================"
 
     eval "$command"
-    result=$(python3.10 post_process.py "$project_name")
+    result=$(python3 post_process.py "$project_name")
 
     if [[ "$result" == "SUCCESS" ]]; then
       echo "Post-process succeeded."
@@ -43,7 +43,7 @@ run_with_retries() {
 
     read -p "Post-process failed after $max_retries attempts. Do you want to retry again? (yes/no): " user_input
     case "$user_input" in
-      [Yy]* ) eval "$command"; result=$(python3.10 post_process.py "$project_name");
+      [Yy]* ) eval "$command"; result=$(python3 post_process.py "$project_name");
               if [[ "$result" == "SUCCESS" ]]; then
                 echo "Post-process succeeded."
                 return
@@ -73,9 +73,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Set up API key, increment experiment, and prepare AI settings
-python3.10 setup_api_key.py  # Sets up the API key required for the scripts
-python3.10 experimental_setups/increment_experiment.py  # Updates experimental parameters
-python3.10 prepare_ai_settings.py  # Prepares the AI settings configuration
+python3 setup_api_key.py  # Sets up the API key required for the scripts
+python3 experimental_setups/increment_experiment.py  # Updates experimental parameters
+python3 prepare_ai_settings.py  # Prepares the AI settings configuration
 
 # Check for the --repo argument or file path
 if [[ -n "$repo_url" ]]; then
@@ -91,7 +91,7 @@ if [[ -n "$repo_url" ]]; then
 
   # Call get_main_language.py to determine the main language of the repository
   # The Python script is expected to return a string like "Primary language: <language>"
-  primary_language=$(python3.10 get_main_language.py "$repo_url")
+  primary_language=$(python3 get_main_language.py "$repo_url")
   echo "$primary_language"
 
   # Continue processing for a single repository
@@ -102,7 +102,7 @@ if [[ -n "$repo_url" ]]; then
   echo "{}" > ~/.docker/config.json
 
   # Call the Python script to clone the repo and set metadata
-  python3.10 clone_and_set_metadata.py "$project_name" "$repo_url" "$primary_language"
+  python3 clone_and_set_metadata.py "$project_name" "$repo_url" "$primary_language"
 
   # Run the main script with specific AI settings and experiment parameters
   run_with_retries "./run.sh --ai-settings ai_settings.yaml -c -l \"$num\" -m json_file --experiment-file \"project_meta_data.json\"" "$project_name"
@@ -127,7 +127,7 @@ elif [[ -f "$repo_url" ]]; then
       echo "{}" > ~/.docker/config.json
 
       # Call the Python script to clone the repo and set metadata
-      python3.10 clone_and_set_metadata.py "$project_name" "$github_url" "$language"
+      python3 clone_and_set_metadata.py "$project_name" "$github_url" "$language"
 
       # Run the main script with specific AI settings and experiment parameters
       run_with_retries "./run.sh --ai-settings ai_settings.yaml -c -l \"$num\" -m json_file --experiment-file \"project_meta_data.json\"" "$project_name"

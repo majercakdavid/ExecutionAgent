@@ -13,7 +13,7 @@ function find_python_command() {
     fi
 }
 
-PYTHON_CMD="python3.10"
+PYTHON_CMD="python3"
 export OPENAI_API_KEY=GLOBAL-API-KEY-PLACEHOLDER
 #echo "This is OPENAI_KEY..."
 #echo $OPENAI_API_KEY
