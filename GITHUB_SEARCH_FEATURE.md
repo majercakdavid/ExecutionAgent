@@ -20,8 +20,8 @@ search_github_repos(query="autonomous agent build automation", num_results=10)
 - Star count
 - Primary language
 - Fork count
-- Topics
-- Last update date
+- Topics (as array)
+- Last update date (field name: `updated_at`)
 
 ### 2. Standalone Script: `search_similar_repositories.py`
 A user-friendly command-line script for searching GitHub repositories outside of the agent context.
@@ -63,7 +63,7 @@ Showing top 10 results:
    ⭐ Stars: 25,432 | 🍴 Forks: 3,456
    💻 Language: Python
    🔗 URL: https://github.com/microsoft/autogen
-   🏷️  Topics: ai, automation, agents, llm, gpt
+   🏷️  Topics: ['ai', 'automation', 'agents', 'llm', 'gpt']
    📝 Enable Next-Gen Large Language Model Applications. Join our Discord: https://discord.gg/autogen...
 
 2. Significant-Gravitas/AutoGPT
@@ -79,7 +79,7 @@ Showing top 10 results:
 ## Technical Details
 
 ### GitHub API Integration
-- Uses GitHub REST API v3 search endpoint
+- Uses GitHub REST API search endpoint
 - Searches repositories with query string
 - Sorts by star count (popularity)
 - Returns up to 100 results per request (GitHub API limit)
@@ -110,8 +110,8 @@ Showing top 10 results:
 
 Potential improvements for this feature:
 - GitHub personal access token support for higher rate limits
-- Filter by language, stars, or activity
-- Advanced search operators (e.g., "stars:>1000")
+- Advanced filtering by minimum star count, specific languages, or recent activity
+- Support for additional search operators (e.g., "stars:>1000", "language:Python")
 - Cache results to reduce API calls
 - Integration with other code hosting platforms (GitLab, Bitbucket)
 - Similarity scoring based on repository metadata and topics
