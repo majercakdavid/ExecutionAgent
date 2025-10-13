@@ -1,0 +1,43 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      # Installing only linting tools for performance (4 packages vs 200+ in requirements.txt)
+      # Versions pinned to match requirements.txt for consistency
+      run: |
+        python -m pip install --upgrade pip
+        pip install black==24.4.2 isort==5.13.2 flake8==7.0.0 mypy==1.10.0
+    
+    - name: Run Black (check formatting)
+      run: black --check --diff autogpt
+      continue-on-error: true
+    
+    - name: Run isort (check import sorting)
+      run: isort --check-only --diff autogpt
+      continue-on-error: true
+    
+    - name: Run Flake8 (critical errors only)
+      run: flake8 autogpt --count --select=E9,F63,F7,F82 --show-source --statistics
+      continue-on-error: true
+    
+    - name: Run Mypy (type checking)
+      run: mypy autogpt --ignore-missing-imports
+      continue-on-error: true
