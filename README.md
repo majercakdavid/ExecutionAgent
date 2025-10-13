@@ -1,108 +1,213 @@
 # ExecutionAgent 🚀  
-Automate Building, Testing, and Validation of GitHub Projects in Isolated Containers  
+**Automate Building, Testing, and Validation of GitHub Projects in Isolated Containers**
 
-ExecutionAgent is a robust tool leveraging a large language model (LLM) to autonomously **clone, build, install**, and **run test cases** for projects hosted on GitHub—all inside an isolated container. With support for multiple languages and configurations, ExecutionAgent aims to streamline development and quality assurance workflows.  
+ExecutionAgent is a powerful tool that leverages large language models (LLMs) to autonomously **clone, build, install**, and **run test cases** for projects hosted on GitHub—all within isolated containers. With support for multiple programming languages and configurations, ExecutionAgent streamlines development and quality assurance workflows.  
 <div style="text-align: center;">
   <img src="execution_agent.png" alt="Alt text" width="300" height="300">
 </div>
 
 ---
 
-## 📦 Dev Container Setup  
+## 📋 Prerequisites
+
+Before using ExecutionAgent, ensure you have the following installed:
+
+- **Python 3.10+** - Required for running the agent
+- **Docker** - For containerized build and test environments
+- **Git** - For cloning repositories
+- **OpenAI API Key** - Required for LLM interactions
+
+### System Requirements
+- Linux or macOS (recommended)
+- Minimum 8GB RAM
+- 20GB free disk space for Docker images and containers
+
+---
+
+## 🛠️ Installation
+
+### Option 1: VSCode Dev Container (Recommended)
 To get started in a VSCode Dev Container:  
-1. Install the [Remote - Containers](https://code.visualstudio.com/docs/remote/containers) extension.  
-2. Clone this repository.  
-3. Open the repository in VSCode, and it will prompt you to reopen in the dev container. Alternatively, use a command to open the current folder in a dev container.  
+1. Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/majercakdavid/ExecutionAgent.git
+   cd ExecutionAgent
+   ```
+3. Open the repository in VSCode, and it will prompt you to reopen in the dev container
+4. Set up your OpenAI API key:
+   ```bash
+   python3.10 setup_api_key.py
+   ```
+
+### Option 2: Local Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/majercakdavid/ExecutionAgent.git
+   cd ExecutionAgent
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up your OpenAI API key:
+   ```bash
+   python3.10 setup_api_key.py
+   ```
 
 ---
 
 ## ✨ Key Features  
-- **Dual Mode Execution**: Run ExecutionAgent with a batch file or directly with a GitHub repository URL.  
-- **Autonomous Workflow**: Clone, build, and test GitHub projects with no human intervention (we will add human-in-the-loop soon).
-- **Language Support**: Multiple languages like Python, C, C++, Java, JavaScript, and more.  
-- **Dev Container Integration**: Preconfigured for VSCode Dev Containers for seamless development.  
-- **Metrics** (based on evaluation set of 50 projects):  
+- **Dual Mode Execution**: Run ExecutionAgent with a batch file containing multiple projects or directly with a single GitHub repository URL
+- **Autonomous Workflow**: Automatically clone, build, and test GitHub projects with minimal human intervention
+- **Multi-Language Support**: Supports Python, C, C++, Java, JavaScript, and more
+- **Containerized Execution**: All builds and tests run in isolated Docker containers for safety and reproducibility
+- **Dev Container Integration**: Pre-configured for VSCode Dev Containers for seamless development experience
+- **Learning Capability**: Agent learns from previous attempts and adjusts its strategy
+- **Proven Performance** (based on evaluation of 50 projects):  
   - Build Success Rate: **80%**  
-  - Test Success Rate: **65%**  
+  - Test Execution Rate: **65%**  
 
 ---
 
 ## 🚀 How It Works  
 
+ExecutionAgent uses an LLM-powered approach to understand project structure, dependencies, and build requirements. It then:
+1. Analyzes the repository to detect the programming language and build system
+2. Searches for relevant documentation (README, installation guides, CI workflows)
+3. Creates a Dockerfile and installation scripts tailored to the project
+4. Builds the project in an isolated Docker container
+5. Executes the project's test suite
+6. Learns from failures and retries with improved strategies
+
 ### 1️⃣ Single Repository Mode  
-You can directly process a single GitHub repository using the `--repo` option:  
+Process a single GitHub repository using the `--repo` option:  
 ```bash
-./ExecutionAgent.sh --repo <github_repo_url> -l <num_value>
+./ExecutionAgent.sh --repo <github_repo_url> -l <num_cycles>
 ```  
-Example:  
+
+**Example:**  
 ```bash
 ./ExecutionAgent.sh --repo https://github.com/pytest-dev/pytest -l 50
 ```  
 
-When this mode is used, ExecutionAgent will:  
-1. Extract the project name from the URL.  
-2. Determine the repository's primary programming language by calling `get_main_language.py`.  
-3. Clone the repository and set up metadata.  
-4. Launch the main loop of ExecutionAgent to build the project and run its test cases.  
+**What happens:**
+1. The project name is extracted from the URL
+2. The repository's primary programming language is determined automatically
+3. The repository is cloned and metadata is set up
+4. ExecutionAgent launches its main loop to build the project and run test cases
 
-The `-l` option allows you to specify the number of cycles which corresponds to the number of actions the agent can execute. By default, if `-l` is not provided, it will be set to 40. If you want to set a different number, simply pass the desired value after `-l`. For example, `-l 50` will use 50 instead of the default value.  
+**Options:**
+- `-l <number>`: Sets the number of action cycles the agent can execute (default: 40)
+  - Example: `-l 50` allows the agent to perform up to 50 actions
 
 ### 2️⃣ Batch File Mode  
-Prepare a batch file listing projects to process in the format:  
-`<project_name> <github_url> <language>`  
+Process multiple projects by providing a batch file listing projects in the format:  
+```
+<project_name> <github_url> <language>
+```
 
-Example (notice how for now we leave one empty line after each entry):  
+**Example batch file (projects.txt):**
 ```plaintext
 scipy https://github.com/scipy/scipy Python
 
 pytest https://github.com/pytest-dev/pytest Python
+
+requests https://github.com/psf/requests Python
 ```
 
-Run ExecutionAgent with the batch file:  
+**Note:** Leave one empty line after each entry.
+
+**Run with:**
 ```bash
-./ExecutionAgent.sh /path/to/batch_file.txt
+./ExecutionAgent.sh /path/to/projects.txt -l 50
 ```  
-ExecutionAgent will process each project listed in the file, performing the same steps as the single repository mode. The `-l` option can also be applied here by adding it to the command when running the script.
 
-To show the results of the last experiment for a specific project, you can call:
-```sh
-#
+ExecutionAgent will process each project sequentially, performing the same steps as in single repository mode.
+
+### 📊 View Results
+To show the results of the last experiment for a specific project:
+```bash
 python3.10 show_results.py <project_name>
-# example python3.10 show_results.py pytest
+# Example:
+python3.10 show_results.py pytest
 ```
 
-To clean all the logs and unset the api token, you can use the following command (WARNING: ALL THE LOGS AND EXECUTION RESULTS WOULD BE DELETED)
-```sh
+### 🧹 Clean Up
+To remove all logs, results, and unset the API token:
+```bash
 ./clean.sh
 ```
+**⚠️ WARNING:** This will delete ALL logs and execution results!
 
 ---
 
 ## 🔧 Configuration 
 
-**More options on configuring the agent would be coming soon**
+### Setting the Number of Cycles per Attempt
+Use the `-l` parameter when running ExecutionAgent to control how many actions the agent can perform in each attempt (default: 40).
 
-### Control the Number of Iterations:
-By default, the number of attempts `ExecutionAgent` will make is 3. After each attempt, `ExecutionAgent` learns from the previous one and adjust its strategy.
-In each attempt, the agent executes a number of commands (or cycles) defined by the parameter `l` mentioned above (default = 40).
+**Example:**
+```bash
+./ExecutionAgent.sh --repo https://github.com/example/project -l 60
+```
 
-To set the number of attempts, you need to change line 17 (local max_retries=2) to any number you want (the total number of attempts would be max_retries +1).
+### Setting the Number of Retry Attempts
+By default, ExecutionAgent makes **3 attempts** (configurable as `max_retries + 1`). After each attempt, the agent learns from previous failures and adjusts its strategy.
 
-### Keep or Delete a docker container
-You can set this option in the file `customize.json`. Default value is `"FALSE"` (containers would be deleted). The other option is `"True"` which keeps the containers.
+To change the number of attempts:
+1. Open `ExecutionAgent.sh`
+2. Modify line 17: `local max_retries=2` to your desired value
+   - Example: `local max_retries=4` will result in 5 total attempts
 
-This options useful for the ones who want to reuse the container already built by the agent.
+### Container Retention Policy
+Control whether Docker containers are kept or deleted after execution:
+
+1. Edit `customize.json`
+2. Set the `keep_container` option:
+   - `"FALSE"` (default): Containers are deleted after execution
+   - `"TRUE"`: Containers are retained for later inspection or reuse
+
+**Example customize.json:**
+```json
+{
+  "keep_container": "TRUE"
+}
+```
+
+**Use Case:** Keeping containers is useful when you want to:
+- Inspect the build environment manually
+- Debug failed builds interactively
+- Reuse containers for faster subsequent runs
+
+### OpenAI API Configuration
+Set or update your OpenAI API key:
+```bash
+python3.10 setup_api_key.py
+```
+
+To remove the API key:
+```bash
+python3.10 remove_api_token.py
+```
 
 ---
 
 ## 📊 Results Summary  
+
+Based on evaluation of **50 diverse GitHub projects**:
 
 | **Metric**              | **Success Rate** |  
 |--------------------------|------------------|  
 | Build Success Rate       | 80%              |  
 | Test Execution Rate      | 65%              |  
 
-Results are logged under `experimental_setups/experiment_XX`, where `XX` is an incremented number for each invocation of ExecutionAgent.  
+**What this means:**
+- **80%** of projects were successfully built from source
+- **65%** of projects had their test suites successfully executed
+- Results demonstrate effectiveness across various languages and build systems
+
+All results are logged in `experimental_setups/experiment_XX`, where `XX` is an incremented experiment number for each invocation of ExecutionAgent.  
 
 ## 📁 Output Folder Structure Explanation  
 
@@ -123,10 +228,98 @@ The folder structure under `experimental_setups/experiment_XX` is organized to k
 
 ---
 
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### API Key Not Set
+**Problem:** Error message about missing OpenAI API key  
+**Solution:** 
+```bash
+python3.10 setup_api_key.py
+```
+
+#### Docker Permission Errors
+**Problem:** Permission denied when accessing Docker  
+**Solution:** Add your user to the docker group:
+```bash
+sudo usermod -aG docker $USER
+# Log out and log back in for changes to take effect
+```
+
+#### Build Failures
+**Problem:** Agent fails to build a project  
+**Solutions:**
+- Check the logs in `experimental_setups/experiment_XX/logs/`
+- Review the generated Dockerfile in `experimental_setups/experiment_XX/files/`
+- Try increasing the number of cycles with `-l 60` or higher
+- The agent learns from failures; it may succeed on subsequent retries
+
+#### Out of Memory Errors
+**Problem:** Docker containers run out of memory  
+**Solution:** Increase Docker's memory allocation:
+- Docker Desktop: Settings → Resources → Memory (set to at least 8GB)
+- Linux: Configure Docker daemon with appropriate memory limits
+
+#### Rate Limiting
+**Problem:** OpenAI API rate limit exceeded  
+**Solution:** 
+- Wait for the rate limit to reset (usually 1 minute)
+- Consider upgrading your OpenAI API plan for higher limits
+
+### Getting Help
+- Check the [logs directory](#-output-folder-structure-explanation) for detailed execution logs
+- Review the [research paper](https://software-lab.org/publications/ExecutionAgent_2024-12-14.pdf) for technical details
+- Open an issue on GitHub with:
+  - The command you ran
+  - Relevant logs from `experimental_setups/experiment_XX/`
+  - Error messages
+
+---
+
 ## 📜 Research Paper  
 Dive into the technical details and evaluation in our [paper](https://software-lab.org/publications/ExecutionAgent_2024-12-14.pdf).  
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions! Here are some ways you can help:
+
+- **Report Bugs:** Open an issue with details about the problem
+- **Suggest Features:** Share your ideas for new functionality
+- **Improve Documentation:** Help make these docs even better
+- **Submit Pull Requests:** Fix bugs or add features
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes and test thoroughly
+4. Commit with clear messages: `git commit -m "Add feature X"`
+5. Push to your fork: `git push origin feature-name`
+6. Open a pull request
+
+### Code Style
+- Follow existing code formatting
+- Add comments for complex logic
+- Update documentation for user-facing changes
+
+---
+
 ## 📬 Feedback  
-Have suggestions or found a bug? Open an issue or contact us at [my_email](mailto:fi_bouzenia@esi.dz).
+Have suggestions or found a bug? We'd love to hear from you!
+
+- **Email:** [fi_bouzenia@esi.dz](mailto:fi_bouzenia@esi.dz)
+- **Issues:** Open an issue on [GitHub](https://github.com/majercakdavid/ExecutionAgent/issues)
+
+---
+
+## 📄 License
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+Built on top of [Auto-GPT](https://github.com/Significant-Gravitas/Auto-GPT) framework.
