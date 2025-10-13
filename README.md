@@ -6,6 +6,15 @@ ExecutionAgent is a powerful tool that leverages large language models (LLMs) to
   <img src="execution_agent.png" alt="Alt text" width="300" height="300">
 </div>
 
+## 📚 Documentation
+
+- **[Installation & Setup](#-installation)** - Get started quickly
+- **[Usage Guide](#-how-it-works)** - Learn how to use ExecutionAgent
+- **[Configuration](#-configuration)** - Customize behavior
+- **[Architecture](ARCHITECTURE.md)** - Understand the system design
+- **[Contributing](CONTRIBUTING.md)** - Help improve ExecutionAgent
+- **[Troubleshooting](#-troubleshooting)** - Solve common issues
+
 ---
 
 ## 📋 Prerequisites

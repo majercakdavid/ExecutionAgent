@@ -31,8 +31,12 @@ def get_highest_numbered_file(directory: str, prefix: str) -> str | None:
         The filename with the highest number suffix, or None if no matching files found
         
     Example:
-        >>> get_highest_numbered_file("/path/to/dir", "Dockerfile_")
-        "Dockerfile_3"  # If Dockerfile_1, Dockerfile_2, Dockerfile_3 exist
+        Given files: Dockerfile_1, Dockerfile_2, Dockerfile_3
+        >>> get_highest_numbered_file("./project_files", "Dockerfile_")
+        "Dockerfile_3"
+        
+    Note:
+        This function only examines the filename, not the full path.
     """
     files = [f for f in os.listdir(directory) if f.startswith(prefix) and f[len(prefix):].isdigit()]
     if not files:

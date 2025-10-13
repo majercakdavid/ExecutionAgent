@@ -374,13 +374,32 @@ Results Summary
 
 ## Future Enhancements
 
-Potential areas for architectural improvements:
+Potential areas for architectural improvements, organized by priority:
 
-1. **Multi-Agent Systems**: Parallel execution of multiple projects
-2. **Human-in-the-Loop**: Interactive decision points
-3. **Advanced Memory**: Vector-based knowledge retrieval
-4. **Custom Agents**: Project-specific agent specialization
-5. **Web Interface**: GUI for monitoring and control
+### High Priority
+1. **Human-in-the-Loop** - Add interactive decision points for critical operations
+   - Complexity: Medium
+   - Impact: Improves reliability and user control
+
+2. **Advanced Memory** - Implement vector-based knowledge retrieval
+   - Complexity: High
+   - Impact: Better learning across attempts
+
+### Medium Priority  
+3. **Web Interface** - GUI for monitoring and controlling execution
+   - Complexity: High
+   - Impact: Improved user experience
+
+4. **Custom Agents** - Project-specific agent specialization
+   - Complexity: Medium
+   - Impact: Better success rates for specific project types
+
+### Lower Priority
+5. **Multi-Agent Systems** - Parallel execution of multiple projects
+   - Complexity: High
+   - Impact: Faster batch processing
+
+**Note:** Priorities and complexities are estimates and may change based on community feedback and contribution interest.
 
 ---
 

@@ -10,21 +10,26 @@ import requests
 
 def get_repo_languages(owner: str, repo: str) -> None:
     """
-    Fetch and display the primary programming language of a GitHub repository.
+    Fetch and print the primary programming language of a GitHub repository.
     
     The primary language is determined by the largest byte count among all
-    languages used in the repository.
+    languages used in the repository. The function prints the result to stdout
+    rather than returning it, making it suitable for use in shell scripts.
     
     Args:
         owner: GitHub repository owner (username or organization)
         repo: Repository name
         
     Returns:
-        None. Prints the primary language to stdout.
+        None. Prints the primary language name to stdout.
         
     Example:
         >>> get_repo_languages("pytest-dev", "pytest")
         Python
+        
+    Note:
+        This function prints to stdout for integration with shell scripts.
+        To capture the output programmatically, use subprocess or similar.
     """
     # GitHub API URL for languages of a repository
     url = f"https://api.github.com/repos/{owner}/{repo}/languages"
