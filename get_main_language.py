@@ -14,7 +14,7 @@ def get_repo_languages(owner: str, repo: str) -> None:
     
     The primary language is determined by the largest byte count among all
     languages used in the repository. The function prints the result to stdout
-    rather than returning it, making it suitable for use in shell scripts.
+    rather than returning it, which makes it suitable for use in shell scripts.
     
     Args:
         owner: GitHub repository owner (username or organization)

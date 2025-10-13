@@ -32,6 +32,7 @@ def get_highest_numbered_file(directory: str, prefix: str) -> str | None:
         
     Example:
         Given files: Dockerfile_1, Dockerfile_2, Dockerfile_3
+        
         >>> get_highest_numbered_file("./project_files", "Dockerfile_")
         "Dockerfile_3"
         

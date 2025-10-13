@@ -399,7 +399,10 @@ Potential areas for architectural improvements, organized by priority:
    - Complexity: High
    - Impact: Faster batch processing
 
-**Note:** Priorities and complexities are estimates and may change based on community feedback and contribution interest.
+**Note:** Priorities and complexities are estimates and may change based on community needs. 
+To suggest changes to priorities or propose new enhancements, please open an issue on 
+[GitHub](https://github.com/majercakdavid/ExecutionAgent/issues) with the tag `enhancement`.
+The maintainers regularly review and update these priorities based on community feedback and contribution interest.
 
 ---
 
